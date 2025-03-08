@@ -66,17 +66,20 @@ func main() {
 	nn := paragon.NewTransformerEncoder(tConfig)
 
 	dConfig := paragon.DiffusionConfig{
-		NumTimesteps: 5, // Back to 5 for speed
+		NumTimesteps: 5,
 		MaxLength:    10,
 		LearningRate: 0.001,
-		Epochs:       2000, // Reduced for faster feedback
+		Epochs:       2000,
 		Temperature:  0.4,
 		TopK:         2,
 	}
 	model := paragon.NewDiffusionModel(nn, dConfig, sentences)
 
+	batchSize := 10 // Process 10 sentences at a time
+
 	fmt.Println("Starting training...")
 	for epoch := 0; epoch < dConfig.Epochs; epoch++ {
+		startTime := time.Now()
 		lr := dConfig.LearningRate * (1 + math.Cos(float64(epoch)*math.Pi/float64(dConfig.Epochs))) / 2
 		data := make([][]int, len(sentences))
 		for i, s := range sentences {
@@ -92,46 +95,75 @@ func main() {
 			}
 		}
 		totalLoss := 0.0
-		for _, tokens := range data {
-			t := rand.Intn(dConfig.NumTimesteps)
-			noisyTokens := model.AddNoise(tokens, t)
-			input := make([][]float64, 1)
-			input[0] = make([]float64, dConfig.MaxLength)
-			for i, tok := range noisyTokens {
-				input[0][i] = float64(tok)
+		for i := 0; i < len(sentences); i += batchSize {
+			end := i + batchSize
+			if end > len(sentences) {
+				end = len(sentences)
 			}
-			output := nn.ForwardTransformer(input)
+			batchData := data[i:end]
+			batchInputs := make([][]float64, len(batchData))
+			batchTargets := make([][]int, len(batchData))
+			for j, tokens := range batchData {
+				t := rand.Intn(dConfig.NumTimesteps)
+				noisyTokens := model.AddNoise(tokens, t)
+				batchInputs[j] = make([]float64, dConfig.MaxLength)
+				for k, tok := range noisyTokens {
+					batchInputs[j][k] = float64(tok)
+				}
+				batchTargets[j] = tokens
+			}
+			// Process batch sequentially
+			batchOutputs := make([][][]float64, len(batchData))
+			for j, input := range batchInputs {
+				singleInput := [][]float64{input}                    // [1][MaxLength]
+				batchOutputs[j] = nn.ForwardTransformer(singleInput) // [1][MaxLength*VocabSize]
+			}
 			loss := 0.0
-			for i := 0; i < dConfig.MaxLength; i++ {
-				probs := paragon.Softmax(output[i])
-				target := tokens[i]
-				loss -= math.Log(math.Max(probs[target], 1e-10))
+			for j := 0; j < len(batchData); j++ {
+				for k := 0; k < dConfig.MaxLength; k++ {
+					start := k * tConfig.VocabSize
+					end := (k + 1) * tConfig.VocabSize
+					probs := paragon.Softmax(batchOutputs[j][0][start:end])
+					target := batchTargets[j][k]
+					loss -= math.Log(math.Max(probs[target], 1e-10))
+				}
 			}
-			totalLoss += loss / float64(dConfig.MaxLength)
-			errorTerms := make([][]float64, dConfig.MaxLength)
-			for i := 0; i < dConfig.MaxLength; i++ {
-				probs := paragon.Softmax(output[i])
-				errorTerms[i] = make([]float64, len(probs))
-				for j := 0; j < len(probs); j++ {
-					delta := probs[j]
-					if j == tokens[i] {
-						delta -= 1
+			totalLoss += loss / float64(len(batchData)*dConfig.MaxLength)
+			errorTerms := make([][]float64, len(batchData))
+			for j := 0; j < len(batchData); j++ {
+				errorTerms[j] = make([]float64, dConfig.MaxLength*tConfig.VocabSize)
+				for k := 0; k < dConfig.MaxLength; k++ {
+					start := k * tConfig.VocabSize
+					end := (k + 1) * tConfig.VocabSize
+					probs := paragon.Softmax(batchOutputs[j][0][start:end])
+					for m := 0; m < tConfig.VocabSize; m++ {
+						delta := probs[m]
+						if m == batchTargets[j][k] {
+							delta -= 1
+						}
+						if delta > 5.0 {
+							delta = 5.0
+						} else if delta < -5.0 {
+							delta = -5.0
+						}
+						errorTerms[j][start+m] = delta
 					}
-					if delta > 5.0 {
-						delta = 5.0
-					} else if delta < -5.0 {
-						delta = -5.0
-					}
-					errorTerms[i][j] = delta
 				}
 			}
 			nn.Backward(errorTerms, lr)
 		}
+		totalLoss /= float64(len(sentences)) / float64(batchSize)
 		if epoch%40 == 0 {
-			fmt.Printf(time.Now().String()+" Epoch %d, Loss: %.4f\n", epoch, totalLoss/float64(len(sentences)))
+			fmt.Printf("%s Epoch %d, Loss: %.4f, Time: %v\n", time.Now().String(), epoch, totalLoss, time.Since(startTime))
+		}
+		if epoch%10 == 0 && epoch > 0 {
+			fmt.Println("Generating text at epoch", epoch, "...")
+			generated := model.Generate()
+			fmt.Println("Generated text:", generated)
 		}
 	}
 
+	fmt.Println("Final training complete!")
 	fmt.Println("Generating text...")
 	generated := model.Generate()
 	fmt.Println("Final generated text:", generated)
@@ -139,7 +171,7 @@ func main() {
 	sampleInput := make([][]float64, 1)
 	sampleInput[0] = make([]float64, tConfig.MaxLength)
 	for i := range sampleInput[0] {
-		sampleInput[0][i] = float64(model.Tokenizer.Vocab["if"])
+		sampleInput[0][i] = float64(model.Tokenizer.Vocab["[CLS]"])
 	}
 	output := nn.ForwardTransformer(sampleInput)
 	fmt.Println("Output layer values (raw logits for first token):")
