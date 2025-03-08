@@ -5,6 +5,8 @@ import (
 	"math"
 	"math/rand"
 	"paragon"
+	"runtime"
+	"sync"
 	"time"
 )
 
@@ -68,14 +70,24 @@ func main() {
 	dConfig := paragon.DiffusionConfig{
 		NumTimesteps: 5,
 		MaxLength:    10,
-		LearningRate: 0.001,
+		LearningRate: 0.002, // Upped from 0.001 to speed learning
 		Epochs:       2000,
 		Temperature:  0.4,
-		TopK:         2,
+		TopK:         3,
 	}
 	model := paragon.NewDiffusionModel(nn, dConfig, sentences)
 
-	batchSize := 10 // Process 10 sentences at a time
+	batchSize := 10
+	multithreading := true
+	cpuPercent := 0.8
+
+	numCores := runtime.NumCPU()
+	numThreads := int(float64(numCores) * cpuPercent)
+	if numThreads < 1 {
+		numThreads = 1
+	}
+	numBatches := (len(sentences) + batchSize - 1) / batchSize
+	fmt.Printf("Using %d threads (%d%% of %d cores), %d batches\n", numThreads, int(cpuPercent*100), numCores, numBatches)
 
 	fmt.Println("Starting training...")
 	for epoch := 0; epoch < dConfig.Epochs; epoch++ {
@@ -94,66 +106,161 @@ func main() {
 				}
 			}
 		}
+
 		totalLoss := 0.0
+		var wg sync.WaitGroup
+		lossChan := make(chan float64, numBatches)
+		errorTermsChan := make(chan struct {
+			terms    [][]float64
+			batchIdx int
+		}, numBatches)
+		sem := make(chan struct{}, numThreads)
+
+		accumulatedErrorTerms := make([][]float64, len(sentences))
+		for i := range accumulatedErrorTerms {
+			accumulatedErrorTerms[i] = make([]float64, dConfig.MaxLength*tConfig.VocabSize)
+		}
+
 		for i := 0; i < len(sentences); i += batchSize {
 			end := i + batchSize
 			if end > len(sentences) {
 				end = len(sentences)
 			}
 			batchData := data[i:end]
-			batchInputs := make([][]float64, len(batchData))
-			batchTargets := make([][]int, len(batchData))
-			for j, tokens := range batchData {
-				t := rand.Intn(dConfig.NumTimesteps)
-				noisyTokens := model.AddNoise(tokens, t)
-				batchInputs[j] = make([]float64, dConfig.MaxLength)
-				for k, tok := range noisyTokens {
-					batchInputs[j][k] = float64(tok)
-				}
-				batchTargets[j] = tokens
-			}
-			// Process batch sequentially
-			batchOutputs := make([][][]float64, len(batchData))
-			for j, input := range batchInputs {
-				singleInput := [][]float64{input}                    // [1][MaxLength]
-				batchOutputs[j] = nn.ForwardTransformer(singleInput) // [1][MaxLength*VocabSize]
-			}
-			loss := 0.0
-			for j := 0; j < len(batchData); j++ {
-				for k := 0; k < dConfig.MaxLength; k++ {
-					start := k * tConfig.VocabSize
-					end := (k + 1) * tConfig.VocabSize
-					probs := paragon.Softmax(batchOutputs[j][0][start:end])
-					target := batchTargets[j][k]
-					loss -= math.Log(math.Max(probs[target], 1e-10))
-				}
-			}
-			totalLoss += loss / float64(len(batchData)*dConfig.MaxLength)
-			errorTerms := make([][]float64, len(batchData))
-			for j := 0; j < len(batchData); j++ {
-				errorTerms[j] = make([]float64, dConfig.MaxLength*tConfig.VocabSize)
-				for k := 0; k < dConfig.MaxLength; k++ {
-					start := k * tConfig.VocabSize
-					end := (k + 1) * tConfig.VocabSize
-					probs := paragon.Softmax(batchOutputs[j][0][start:end])
-					for m := 0; m < tConfig.VocabSize; m++ {
-						delta := probs[m]
-						if m == batchTargets[j][k] {
-							delta -= 1
+			batchIdx := i / batchSize
+
+			if multithreading {
+				wg.Add(1)
+				sem <- struct{}{}
+				go func(startIdx int, batch [][]int, idx int) {
+					defer wg.Done()
+					defer func() { <-sem }()
+
+					batchInputs := make([][]float64, len(batch))
+					batchTargets := make([][]int, len(batch))
+					for j, tokens := range batch {
+						t := rand.Intn(dConfig.NumTimesteps)
+						noisyTokens := model.AddNoise(tokens, t)
+						batchInputs[j] = make([]float64, dConfig.MaxLength)
+						for k, tok := range noisyTokens {
+							batchInputs[j][k] = float64(tok)
 						}
-						if delta > 5.0 {
-							delta = 5.0
-						} else if delta < -5.0 {
-							delta = -5.0
+						batchTargets[j] = tokens
+					}
+					batchOutputs := make([][][]float64, len(batch))
+					for j, input := range batchInputs {
+						singleInput := [][]float64{input}
+						batchOutputs[j] = nn.ForwardTransformer(singleInput)
+					}
+
+					loss := 0.0
+					batchErrorTerms := make([][]float64, len(batch))
+					for j := 0; j < len(batch); j++ {
+						batchErrorTerms[j] = make([]float64, dConfig.MaxLength*tConfig.VocabSize)
+						for k := 0; k < dConfig.MaxLength; k++ {
+							start := k * tConfig.VocabSize
+							end := (k + 1) * tConfig.VocabSize
+							probs := paragon.Softmax(batchOutputs[j][0][start:end])
+							target := batchTargets[j][k]
+							loss -= math.Log(math.Max(probs[target], 1e-10))
+							for m := 0; m < tConfig.VocabSize; m++ {
+								delta := probs[m]
+								if m == batchTargets[j][k] {
+									delta -= 1
+								}
+								if delta > 5.0 {
+									delta = 5.0
+								} else if delta < -5.0 {
+									delta = -5.0
+								}
+								batchErrorTerms[j][start+m] = delta
+							}
 						}
-						errorTerms[j][start+m] = delta
+					}
+					lossChan <- loss / float64(len(batch)*dConfig.MaxLength)
+					errorTermsChan <- struct {
+						terms    [][]float64
+						batchIdx int
+					}{batchErrorTerms, idx}
+				}(i, batchData, batchIdx)
+			} else {
+				batchInputs := make([][]float64, len(batchData))
+				batchTargets := make([][]int, len(batchData))
+				for j, tokens := range batchData {
+					t := rand.Intn(dConfig.NumTimesteps)
+					noisyTokens := model.AddNoise(tokens, t)
+					batchInputs[j] = make([]float64, dConfig.MaxLength)
+					for k, tok := range noisyTokens {
+						batchInputs[j][k] = float64(tok)
+					}
+					batchTargets[j] = tokens
+				}
+				batchOutputs := make([][][]float64, len(batchData))
+				for j, input := range batchInputs {
+					singleInput := [][]float64{input}
+					batchOutputs[j] = nn.ForwardTransformer(singleInput)
+				}
+				loss := 0.0
+				for j := 0; j < len(batchData); j++ {
+					for k := 0; k < dConfig.MaxLength; k++ {
+						start := k * tConfig.VocabSize
+						end := (k + 1) * tConfig.VocabSize
+						probs := paragon.Softmax(batchOutputs[j][0][start:end])
+						target := batchTargets[j][k]
+						loss -= math.Log(math.Max(probs[target], 1e-10))
+					}
+				}
+				totalLoss += loss / float64(len(batchData)*dConfig.MaxLength)
+
+				errorTerms := make([][]float64, len(batchData))
+				for j := 0; j < len(batchData); j++ {
+					errorTerms[j] = make([]float64, dConfig.MaxLength*tConfig.VocabSize)
+					for k := 0; k < dConfig.MaxLength; k++ {
+						start := k * tConfig.VocabSize
+						end := (k + 1) * tConfig.VocabSize
+						probs := paragon.Softmax(batchOutputs[j][0][start:end])
+						for m := 0; m < tConfig.VocabSize; m++ {
+							delta := probs[m]
+							if m == batchTargets[j][k] {
+								delta -= 1
+							}
+							if delta > 5.0 {
+								delta = 5.0
+							} else if delta < -5.0 {
+								delta = -5.0
+							}
+							errorTerms[j][start+m] = delta
+						}
+					}
+				}
+				nn.Backward(errorTerms, lr)
+			}
+		}
+
+		if multithreading {
+			go func() {
+				wg.Wait()
+				close(lossChan)
+				close(errorTermsChan)
+			}()
+
+			for l := range lossChan {
+				totalLoss += l
+			}
+			for et := range errorTermsChan {
+				start := et.batchIdx * batchSize
+				for j, terms := range et.terms {
+					if start+j < len(accumulatedErrorTerms) {
+						accumulatedErrorTerms[start+j] = terms
 					}
 				}
 			}
-			nn.Backward(errorTerms, lr)
+
+			nn.Backward(accumulatedErrorTerms, lr)
 		}
-		totalLoss /= float64(len(sentences)) / float64(batchSize)
-		if epoch%40 == 0 {
+
+		totalLoss /= float64(numBatches)
+		if epoch%10 == 0 {
 			fmt.Printf("%s Epoch %d, Loss: %.4f, Time: %v\n", time.Now().String(), epoch, totalLoss, time.Since(startTime))
 		}
 		if epoch%10 == 0 && epoch > 0 {
