@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"paragon"
+	"time"
 )
 
 func generateSentences(n int) []string {
@@ -49,7 +50,7 @@ func main() {
 		"if the car drives then it moves",
 		"kids shout if they are excited",
 	}
-	sentences = append(sentences, generateSentences(100)...)
+	sentences = append(sentences, generateSentences(477)...) // Total 500 sentences
 
 	tokenizer := paragon.NewCustomTokenizer(sentences)
 
@@ -65,11 +66,11 @@ func main() {
 	nn := paragon.NewTransformerEncoder(tConfig)
 
 	dConfig := paragon.DiffusionConfig{
-		NumTimesteps: 5,
+		NumTimesteps: 5, // Back to 5 for speed
 		MaxLength:    10,
 		LearningRate: 0.001,
-		Epochs:       6000,
-		Temperature:  0.4, // Lowered for sharper sampling
+		Epochs:       2000, // Reduced for faster feedback
+		Temperature:  0.4,
 		TopK:         2,
 	}
 	model := paragon.NewDiffusionModel(nn, dConfig, sentences)
@@ -127,7 +128,7 @@ func main() {
 			nn.Backward(errorTerms, lr)
 		}
 		if epoch%40 == 0 {
-			fmt.Printf("Epoch %d, Loss: %.4f\n", epoch, totalLoss/float64(len(sentences)))
+			fmt.Printf(time.Now().String()+" Epoch %d, Loss: %.4f\n", epoch, totalLoss/float64(len(sentences)))
 		}
 	}
 
