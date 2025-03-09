@@ -140,7 +140,7 @@ func main() {
 	nn := paragon.NewTransformerEncoder(tConfig)
 
 	dConfig := paragon.DiffusionConfig{
-		NumTimesteps: 5, // Used in GenerateMasked for discrete steps
+		NumTimesteps: 20, // Used in GenerateMasked for discrete steps
 		MaxLength:    10,
 		LearningRate: 0.002,
 		Epochs:       2000,
