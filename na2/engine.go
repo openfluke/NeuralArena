@@ -85,7 +85,7 @@ func splitIntoSentences(text string) []string {
 func main() {
 	fmt.Println("V5-IMPLEMENTATION-NA1-DIFFUSION-TRANSFORMER-MASKED")
 
-	url := "https://www.gutenberg.org/files/28/28-0.txt" // Pride and Prejudice as an example
+	/*url := "https://www.gutenberg.org/files/28/28-0.txt" // Pride and Prejudice as an example
 	additionalSentences, err := downloadText(url)
 	if err != nil {
 		fmt.Printf("Error downloading text: %v\n", err)
@@ -96,7 +96,7 @@ func main() {
 	// Limit to 100 sentences
 	if len(additionalSentences) > 100 {
 		additionalSentences = additionalSentences[:100]
-	}
+	}*/
 
 	sentences := []string{
 		"the cat sat on the mat",
@@ -124,7 +124,7 @@ func main() {
 		"kids shout if they are excited",
 	}
 	sentences = append(sentences, generateSentences(477)...) // Total 500 sentences
-	sentences = append(sentences, additionalSentences...)
+	//sentences = append(sentences, additionalSentences...)
 
 	tokenizer := paragon.NewCustomTokenizer(sentences)
 
