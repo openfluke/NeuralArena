@@ -27,7 +27,7 @@ func main() {
 
 	// Configurations
 	tConfig := paragon.TransformerConfig{
-		DModel:      16,
+		DModel:      32,
 		NHeads:      2,
 		NLayers:     1,
 		FeedForward: 32,
@@ -39,7 +39,7 @@ func main() {
 	dConfig := paragon.DiffusionConfig{
 		NumTimesteps: 10,
 		MaxLength:    5,
-		LearningRate: 0.001,
+		LearningRate: 0.0001,
 		Epochs:       100,
 		Temperature:  1.0,
 		TopK:         3,
