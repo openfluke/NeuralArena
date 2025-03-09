@@ -362,14 +362,14 @@ func main() {
 		}
 
 		totalLoss /= float64(numBatches)
-		if epoch%10 == 0 {
-			fmt.Printf("%s Epoch %d, Loss: %.4f, Time: %v\n", time.Now().String(), epoch, totalLoss, time.Since(startTime))
-		}
-		if epoch%10 == 0 && epoch > 0 {
-			fmt.Println("Generating text at epoch", epoch, "...")
-			generated := model.GenerateMasked()
-			fmt.Println("Generated text:", generated)
-		}
+		//if epoch%10 == 0 {
+		fmt.Printf("%s Epoch %d, Loss: %.4f, Time: %v\n", time.Now().String(), epoch, totalLoss, time.Since(startTime))
+		//}
+		//if epoch%10 == 0 && epoch > 0 {
+		fmt.Println("Generating text at epoch", epoch, "...")
+		generated := model.GenerateMasked()
+		fmt.Println("Generated text:", generated)
+		//}
 	}
 
 	fmt.Println("Final training complete!")
