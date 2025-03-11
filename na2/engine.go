@@ -335,7 +335,7 @@ func main() {
 					}
 				}
 				totalLoss += loss / float64(len(batchData))
-				nn.Backward(errorTerms, lr)
+				nn.BackwardExternal(errorTerms, lr)
 			}
 		}
 
@@ -358,7 +358,7 @@ func main() {
 				}
 			}
 
-			nn.Backward(accumulatedErrorTerms, lr)
+			nn.BackwardExternal(accumulatedErrorTerms, lr)
 		}
 
 		totalLoss /= float64(numBatches)

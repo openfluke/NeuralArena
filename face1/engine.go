@@ -248,7 +248,7 @@ func trainPixelDiffusion(model *paragon.DiffusionModel, faces [][]int, tokenizer
 				end := start + tConfig.VocabSize
 				reshaped[k] = accumulatedError[start:end]
 			}
-			model.Network.Backward(reshaped, lr)
+			model.Network.BackwardExternal(reshaped, lr)
 		}
 
 		epochLoss := totalLoss / float64(numBatches)

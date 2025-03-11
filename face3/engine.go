@@ -249,7 +249,7 @@ func trainBetterWithSamples(model *paragon.DiffusionModel, data [][]int) {
 				st := i * model.Tokenizer.VocabSize
 				shaped[i] = errorTerms[st : st+model.Tokenizer.VocabSize]
 			}
-			model.Network.Backward(shaped, lr)
+			model.Network.BackwardExternal(shaped, lr)
 		}
 
 		avgLoss := totalLoss / float64(len(data))
