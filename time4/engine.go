@@ -75,7 +75,7 @@ func loadStockData(filename string) ([]StockData, error) {
 }
 
 // prepareTrainingData converts stock data into sequences of discrete tokens
-func prepareTrainingData(stockData []StockData, seqLength int) [][]int {
+func prepareTrainingData(stockData []StockData, seqLength int) (trainData, testData [][]int) {
 	// Reverse data to have oldest first
 	for i, j := 0, len(stockData)-1; i < j; i, j = i+1, j-1 {
 		stockData[i], stockData[j] = stockData[j], stockData[i]
@@ -105,7 +105,20 @@ func prepareTrainingData(stockData []StockData, seqLength int) [][]int {
 	for i := 0; i <= len(changes)-seqLength; i++ {
 		sequences = append(sequences, changes[i:i+seqLength])
 	}
-	return sequences
+
+	// Split into train (80%) and test (20%)
+	trainSize := int(0.8 * float64(len(sequences)))
+	perm := rand.Perm(len(sequences))
+	trainData = make([][]int, trainSize)
+	testData = make([][]int, len(sequences)-trainSize)
+	for i, p := range perm {
+		if i < trainSize {
+			trainData[i] = sequences[p]
+		} else {
+			testData[i-trainSize] = sequences[p]
+		}
+	}
+	return trainData, testData
 }
 
 func main() {
@@ -136,13 +149,13 @@ func main() {
 	}
 	fmt.Printf("Loaded %d days of data\n", len(stockData))
 
-	// Prepare training data
-	trainData := prepareTrainingData(stockData, seqLength)
+	// Prepare training and test data
+	trainData, testData := prepareTrainingData(stockData, seqLength)
 	if len(trainData) == 0 {
 		fmt.Println("Not enough data to create training sequences")
 		return
 	}
-	fmt.Printf("Prepared %d training sequences of length %d\n", len(trainData), seqLength)
+	fmt.Printf("Prepared %d training sequences, %d test sequences of length %d\n", len(trainData), len(testData), seqLength)
 
 	// Transformer configuration
 	tConfig := paragon.TransformerConfig{
@@ -162,7 +175,7 @@ func main() {
 		NumTimesteps:      50,
 		MaxLength:         seqLength,
 		LearningRate:      0.001,
-		Epochs:            50, // Match previous run
+		Epochs:            50,
 		Temperature:       1.0,
 		TopK:              3,
 		MaskScheduleStart: 0.1,
@@ -180,9 +193,9 @@ func main() {
 	model := paragon.NewDiffusionModel(network, dConfig, nil)
 	model.Tokenizer = &tokenizer
 
-	// Train the model
+	// Train and evaluate
 	fmt.Println("Starting training with Diffusion...")
-	trainDiffusion(model, trainData, tConfig)
+	trainDiffusion(model, trainData, testData, tConfig)
 
 	// Generate predictions
 	fmt.Println("\nGenerating predictions:")
@@ -190,10 +203,10 @@ func main() {
 	predictNextQuarter(model, tConfig)
 }
 
-// trainDiffusion trains the model on sequences of price change directions
-func trainDiffusion(model *paragon.DiffusionModel, samples [][]int, tConfig paragon.TransformerConfig) {
-	data := make([][]int, len(samples))
-	copy(data, samples)
+// trainDiffusion trains the model and evaluates accuracy per epoch
+func trainDiffusion(model *paragon.DiffusionModel, trainData, testData [][]int, tConfig paragon.TransformerConfig) {
+	data := make([][]int, len(trainData))
+	copy(data, trainData)
 
 	for epoch := 0; epoch < model.Config.Epochs; epoch++ {
 		totalLoss := 0.0
@@ -261,9 +274,22 @@ func trainDiffusion(model *paragon.DiffusionModel, samples [][]int, tConfig para
 		}
 
 		avgLoss := totalLoss / float64(len(data))
-		if epoch%10 == 0 || epoch == model.Config.Epochs-1 {
-			fmt.Printf("Epoch %d, Loss: %.4f\n", epoch, avgLoss)
+
+		// Evaluate accuracy on test data
+		correct := 0
+		total := 0
+		for _, testSeq := range testData {
+			generated := model.GenerateBetter()
+			for i := 0; i < len(testSeq) && i < len(generated); i++ {
+				if generated[i] == testSeq[i] {
+					correct++
+				}
+				total++
+			}
 		}
+		testAcc := float64(correct) / float64(total) * 100
+
+		fmt.Printf("Epoch %d, Loss: %.4f, Test Acc: %.2f%%\n", epoch, avgLoss, testAcc)
 	}
 }
 
@@ -281,7 +307,6 @@ func predictNextWeek(model *paragon.DiffusionModel, tConfig paragon.TransformerC
 func predictNextQuarter(model *paragon.DiffusionModel, tConfig paragon.TransformerConfig) {
 	fmt.Println("\nPredicting next quarter (90 days):")
 	generated := model.GenerateBetter()
-	// Extrapolate if needed
 	quarterPrediction := make([]int, 0, 90)
 	for len(quarterPrediction) < 90 {
 		generated = model.GenerateBetter()
