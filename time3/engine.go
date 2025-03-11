@@ -134,7 +134,7 @@ func main() {
 	tConfig := paragon.TransformerConfig{
 		DModel:      32,
 		NHeads:      4,
-		NLayers:     2,
+		NLayers:     1,
 		FeedForward: 64,
 		VocabSize:   4,
 		MaxLength:   seqLength,
@@ -144,10 +144,10 @@ func main() {
 	}
 
 	dConfig := paragon.DiffusionConfig{
-		NumTimesteps:      5,
+		NumTimesteps:      15,
 		MaxLength:         seqLength,
-		LearningRate:      0.0005,
-		Epochs:            5,
+		LearningRate:      0.001,
+		Epochs:            20,
 		Temperature:       1.0,
 		TopK:              3,
 		MaskScheduleStart: 0.1,
@@ -178,7 +178,6 @@ func trainDiffusion(model *paragon.DiffusionModel, samples [][]int, tConfig para
 	data := make([][]int, len(samples))
 	copy(data, samples)
 
-	// Subsample for accuracy computation to keep it fast (e.g., 100 samples)
 	sampleSize := 100
 	if sampleSize > len(data) {
 		sampleSize = len(data)
@@ -245,13 +244,12 @@ func trainDiffusion(model *paragon.DiffusionModel, samples [][]int, tConfig para
 			model.Network.BackwardExternal(shaped, lr)
 		}
 
-		// Compute accuracy on a small subsample
 		correct := 0
 		total := 0
 		for i := 0; i < sampleSize; i++ {
 			generated := model.GenerateBetter()
 			if len(generated) != len(samples[i]) {
-				continue // Skip if length mismatch
+				continue
 			}
 			for j := 0; j < len(generated); j++ {
 				if generated[j] == samples[i][j] {
