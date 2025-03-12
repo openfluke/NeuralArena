@@ -576,6 +576,16 @@ func trainBetterDiffusionWithSepBatch(d *paragon.DiffusionModel, samples [][]int
 			}
 			fmt.Println()
 		}
+
+		if err := d.Network.SaveToGob("emoticon_model.gob"); err != nil {
+			panic(fmt.Errorf("failed to save model to gob: %v", err))
+		}
+
+		// Early stop if accuracy >= 95%
+		if accuracy >= 0.95 {
+			fmt.Println("Early stopping: Reached 95% masked accuracy!")
+			break
+		}
 	}
 }
 
@@ -709,11 +719,11 @@ func main() {
 		NumTimesteps:      50,
 		MaxLength:         maxSeqLen,
 		LearningRate:      0.001,
-		Epochs:            50, // reduce epochs for demo
+		Epochs:            1000, // reduce epochs for demo
 		Temperature:       0.8,
 		TopK:              1,
 		MaskScheduleStart: 0.1,
-		MaskScheduleEnd:   0.9,
+		MaskScheduleEnd:   0.5,
 	}
 
 	// 4) Build network + model
@@ -752,6 +762,9 @@ func main() {
 		fmt.Println("Training complete. (Not saving for this demo.)")
 	} else {
 		fmt.Println("Model file found. For demo, we will just re-train anyway.")
+		if err := model.Network.LoadFromGob(modelFile); err != nil {
+			panic(fmt.Errorf("failed to load model from gob: %v", err))
+		}
 		trainBetterDiffusionWithSepBatch(model, data, sepPositions)
 	}
 
