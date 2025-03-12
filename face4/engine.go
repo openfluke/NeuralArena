@@ -448,12 +448,12 @@ func trainBetterDiffusionWithSepBatch(d *paragon.DiffusionModel, samples [][]int
 	copy(data, samples)
 
 	batchSize := 4 // Adjust as desired
-	baseLR := d.Config.LearningRate
+	//baseLR := d.Config.LearningRate
 
 	for epoch := 0; epoch < d.Config.Epochs; epoch++ {
 		// Simple linear LR decay
 		progress := float64(epoch) / float64(d.Config.Epochs)
-		lr := baseLR * (1.0 - progress)
+		lr := d.Config.LearningRate * (math.Cos(progress*math.Pi) + 1) / 2
 
 		// Shuffle data
 		rand.Shuffle(len(data), func(i, j int) {
@@ -709,7 +709,7 @@ func main() {
 	tConfig := paragon.TransformerConfig{
 		DModel:      32,
 		NHeads:      2,
-		NLayers:     2,
+		NLayers:     4,
 		FeedForward: 64,
 		VocabSize:   tok.VocabSize,
 		MaxLength:   maxSeqLen,
@@ -723,7 +723,7 @@ func main() {
 		Temperature:       0.8,
 		TopK:              1,
 		MaskScheduleStart: 0.1,
-		MaskScheduleEnd:   0.5,
+		MaskScheduleEnd:   0.9,
 	}
 
 	// 4) Build network + model
