@@ -709,16 +709,16 @@ func main() {
 	tConfig := paragon.TransformerConfig{
 		DModel:      32,
 		NHeads:      2,
-		NLayers:     4,
-		FeedForward: 64,
+		NLayers:     2,
+		FeedForward: 32,
 		VocabSize:   tok.VocabSize,
 		MaxLength:   maxSeqLen,
 		Activation:  "relu",
 	}
 	dConfig := paragon.DiffusionConfig{
-		NumTimesteps:      50,
+		NumTimesteps:      5,
 		MaxLength:         maxSeqLen,
-		LearningRate:      0.001,
+		LearningRate:      0.01,
 		Epochs:            1000, // reduce epochs for demo
 		Temperature:       0.8,
 		TopK:              1,
