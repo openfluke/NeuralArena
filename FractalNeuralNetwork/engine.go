@@ -2630,8 +2630,8 @@ func experimentEnhancedDeepHierarchy_2(file *os.File) {
 	valInputs, valTargets := generateEnhancedDeepHierarchy(200)
 
 	// Training config (test both)
-	trainCfgShort := paragon.TrainConfig{Epochs: 10, LearningRate: 0.001, Debug: false}
-	trainCfgLong := paragon.TrainConfig{Epochs: 50, LearningRate: 0.001, Debug: false}
+	trainCfgShort := paragon.TrainConfig{Epochs: 500, LearningRate: 0.001, Debug: false}
+	trainCfgLong := paragon.TrainConfig{Epochs: 2000, LearningRate: 0.001, Debug: false}
 
 	// Train baseline (short config)
 	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)

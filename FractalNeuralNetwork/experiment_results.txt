@@ -414,3 +414,37 @@ Fractal Accuracy (layer 5, 4 sub-layers, trial 4, long): 50.50%
 Fractal Accuracy (layer 5, 4 sub-layers, trial 5, long): 46.50%
 Fractal Average Accuracy (layer 5, 4 sub-layers, long): 49.60%
 
+
+=== Experiment Run: 2025-03-21 17:24:47 ===
+Experiment 33: Enhanced Deep Hierarchy
+Baseline Accuracy: 51.00%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 1, short): 55.00%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 2, short): 54.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 3, short): 49.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 4, short): 52.00%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 5, short): 48.00%
+Fractal Average Accuracy (layer 5, 4 sub-layers, short): 51.80%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 1, long): 47.00%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 2, long): 39.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 3, long): 46.00%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 4, long): 47.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 5, long): 48.50%
+Fractal Average Accuracy (layer 5, 4 sub-layers, long): 45.70%
+
+
+=== Experiment Run: 2025-03-21 17:30:16 ===
+Experiment 33: Enhanced Deep Hierarchy
+Baseline Accuracy: 50.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 1, short): 49.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 2, short): 44.00%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 3, short): 50.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 4, short): 45.00%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 5, short): 43.50%
+Fractal Average Accuracy (layer 5, 4 sub-layers, short): 46.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 1, long): 47.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 2, long): 55.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 3, long): 51.50%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 4, long): 48.00%
+Fractal Accuracy (layer 5, 4 sub-layers, trial 5, long): 52.50%
+Fractal Average Accuracy (layer 5, 4 sub-layers, long): 51.00%
+
