@@ -1,0 +1,80 @@
+
+=== Experiment Run: 2025-03-21 13:23:35 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 52.50%
+Fractal Accuracy: 48.50%
+
+Experiment 2: Fractal Pretraining
+Baseline Accuracy: 51.00%
+Pretrained Fractal Accuracy: 48.50%
+
+Experiment 3: Multi-Dimensional (3 Levels)
+Accuracy: 98.00%
+
+
+=== Experiment Run: 2025-03-21 13:30:56 ===
+Experiment 4: Hierarchical XOR
+Baseline Accuracy: 54.50%
+Fractal Accuracy: 50.50%
+
+Experiment 5: Multi-Scale Patterns
+Baseline Accuracy: 100.00%
+Fractal Accuracy: 100.00%
+
+Experiment 6: Temporal Dependencies
+Baseline Accuracy: 99.50%
+Fractal Accuracy: 98.50%
+
+Experiment 7: Sparse Feature Detection
+Baseline Accuracy: 95.50%
+Fractal Accuracy: 92.50%
+
+Experiment 8: Non-Linear Composition
+Baseline Accuracy: 94.00%
+Fractal Accuracy: 92.50%
+
+
+=== Experiment Run: 2025-03-21 13:36:32 ===
+Experiment 9: Deep Hierarchy
+Baseline Accuracy: 48.50%
+Fractal Accuracy: 52.00%
+
+Experiment 10: Polynomial Expansion
+Baseline Accuracy: 95.00%
+Fractal Accuracy: 93.00%
+
+Experiment 11: Multi-Modal Fusion
+Baseline Accuracy: 97.50%
+Fractal Accuracy: 99.50%
+
+Experiment 12: Recursive Patterns
+Baseline Accuracy: 99.00%
+Fractal Accuracy: 98.50%
+
+Experiment 13: Contextual Ambiguity
+Baseline Accuracy: 52.50%
+Fractal Accuracy: 48.50%
+
+
+
+=== Experiment Run: 2025-03-21 13:42:42 ===
+Experiment 14: Nested XOR
+Baseline Accuracy: 45.50%
+Fractal Accuracy: 52.00%
+
+Experiment 15: Pattern Hierarchy
+Baseline Accuracy: 99.00%
+Fractal Accuracy: 98.50%
+
+Experiment 16: Dynamic Scaling
+Baseline Accuracy: 100.00%
+Fractal Accuracy: 100.00%
+
+Experiment 17: Feature Composition
+Baseline Accuracy: 89.50%
+Fractal Accuracy: 91.50%
+
+Experiment 18: Long-Range Context
+Baseline Accuracy: 50.50%
+Fractal Accuracy: 53.50%
+
