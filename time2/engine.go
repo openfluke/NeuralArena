@@ -130,8 +130,6 @@ func main() {
 	filename := "vix-daily.csv"
 	dataURL := "https://raw.githubusercontent.com/datasets/finance-vix/main/data/vix-daily.csv"
 	seqLength := 30
-	epochs := 50
-	learningRate := 0.001
 
 	// Remove any stale AAPL.csv to avoid confusion
 	os.Remove("AAPL.csv")
@@ -187,7 +185,7 @@ func main() {
 	nn := paragon.NewNetwork(layerSizes, activations, fullyConnected)
 
 	fmt.Println("Starting training with Backward...")
-	for epoch := 0; epoch < epochs; epoch++ {
+	/*for epoch := 0; epoch < epochs; epoch++ {
 		totalLoss := 0.0
 		perm := rand.Perm(len(trainInputs))
 		for i, p := range perm {
@@ -207,7 +205,41 @@ func main() {
 			fmt.Printf("Epoch %d, Loss: %.4f, Train Acc: %.2f%%, Test Acc: %.2f%%\n",
 				epoch, avgLoss, trainAcc*100, testAcc*100)
 		}
+	}*/
+
+	// Improved sub-network hyperparameters:
+	// Improved configuration using vector input (assuming layer 1 width is 128)
+	// Improved sub-network hyperparameters:
+	// Define sub-network architecture for dimensional neurons
+	subLayerSizes := []struct{ Width, Height int }{
+		{1, 1},  // Input: single scalar from parent neuron
+		{16, 1}, // Hidden layer 1
+		{16, 1}, // Hidden layer 2
+		{1, 1},  // Output: single scalar
 	}
+	subActivations := []string{"linear", "relu", "relu", "linear"}
+	subFullyConnected := []bool{true, true, true, true}
+
+	// Define options for sub-network initialization
+	opts := paragon.SetLayerDimensionOptions{
+		Shared:     false,    // Each neuron gets its own sub-network instance
+		InitMethod: "xavier", // Use Xavier initialization for better convergence
+	}
+
+	// Assign sub-networks to layer 1 with options
+	nn.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
+
+	nn.Train(inputs, targets, 10, 0.001)
+
+	// Compute accuracy on training data
+	trainAcc := computeAccuracy(nn, trainInputs, trainTargets)
+
+	// Compute accuracy on testing data
+	testAcc := computeAccuracy(nn, testInputs, testTargets)
+
+	// Print the accuracies
+	fmt.Printf("Training Accuracy: %.2f%%\n", trainAcc*100)
+	fmt.Printf("Testing Accuracy: %.2f%%\n", testAcc*100)
 
 	predictFuture(nn, stockData, seqLength, 7, "week")
 	predictFuture(nn, stockData, seqLength, 90, "quarter")
