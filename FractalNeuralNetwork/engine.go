@@ -99,7 +99,8 @@ func main() {
 	//experiment56(file)
 	//experiment57(file)
 
-	Experiment58(file)
+	//Experiment58(file)
+	Experiment59(file)
 }
 
 // Experiment 1: Baseline vs Fractal Network

@@ -751,3 +751,11 @@ Experiment 58 Best Candidate Accuracy: 57.00%
 
 === Experiment Run: 2025-03-21 20:37:08 ===
 Experiment 58 Best Candidate Accuracy: 58.00%
+
+=== Experiment Run: 2025-03-21 20:46:55 ===
+Experiment 58 Best Candidate Accuracy: 52.70%
+
+=== Experiment Run: 2025-03-21 20:57:24 ===
+Experiment 59: Baseline Average Accuracy: 66.95% ± 10.35
+Fractal Average Accuracy: 56.00% ± 0.00
+

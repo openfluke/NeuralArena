@@ -90,8 +90,8 @@ func Experiment58(file *os.File) {
 	fullyConnected := []bool{true, true, true, true, true}
 
 	// Generate dataset for Hierarchical XOR.
-	trainInputs, trainTargets := generateHierarchicalXOR(1000)
-	valInputs, valTargets := generateHierarchicalXOR(200)
+	trainInputs, trainTargets := generateHierarchicalXOR(10000)
+	valInputs, valTargets := generateHierarchicalXOR(2000)
 
 	// Evolution parameters.
 	generations := 5
