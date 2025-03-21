@@ -76,12 +76,30 @@ func main() {
 
 	// Add the new experiment
 	//experimentEnhancedDeepHierarchy(file)
-	experimentEnhancedDeepHierarchy_2(file)
+	//experimentEnhancedDeepHierarchy_2(file)
 	//experimentAdvancedMultiModalFusion(file)
 	//experimentComplexFeatureComposition(file)
 	//experimentExtendedLongRangeContext(file)
 
 	//experimentUltraComplexFeatureComposition(file)
+
+	// Add new experiments
+	//experiment44(file)
+	//experiment45(file)
+	//experiment46(file)
+	//experiment47(file)
+	//experiment48(file)
+	//experiment49(file)
+	//experiment50(file)
+	//experiment51(file)
+	//experiment52(file)
+	//experiment53(file)
+	//experiment54(file)
+	//experiment55(file)
+	//experiment56(file)
+	//experiment57(file)
+
+	Experiment58(file)
 }
 
 // Experiment 1: Baseline vs Fractal Network
@@ -3024,5 +3042,426 @@ func experimentUltraComplexFeatureComposition(file *os.File) {
 		baselineAcc*100, fractalAcc*100)
 	if _, err := file.WriteString(result); err != nil {
 		fmt.Printf("Error writing to file: %v\n", err)
+	}
+}
+
+// Experiment 44: Slight Sub-Network Width Increase for Hierarchical XOR
+func experiment44(file *os.File) {
+	fmt.Println("\n=== Experiment 44: Hierarchical XOR with Increased Sub-Network Width ===")
+
+	// Define main network architecture (same as Experiment 4)
+	layerSizes := []struct{ Width, Height int }{{16, 1}, {32, 1}, {2, 1}}
+	activations := []string{"linear", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true}
+
+	// Create baseline and fractal networks
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+
+	// Define sub-network with increased hidden layer width (6 instead of 4)
+	subLayerSizes := []struct{ Width, Height int }{{1, 1}, {1, 1}, {1, 1}} // Increased from 4 to 6
+	subActivations := []string{"linear", "relu", "linear"}
+	subFullyConnected := []bool{true, true, true}
+	opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
+
+	// Apply sub-network to layer 1 of the fractal network
+	fractalNet.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
+
+	// Generate Hierarchical XOR datasets
+	trainInputs, trainTargets := generateHierarchicalXOR(1000)
+	valInputs, valTargets := generateHierarchicalXOR(200)
+
+	// Training configuration (same as Experiment 4)
+	trainCfg := paragon.TrainConfig{Epochs: 30, LearningRate: 0.001}
+
+	// Train baseline network
+	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
+	fmt.Println("Training baseline network...")
+	trainerBaseline.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+
+	// Train fractal network with increased sub-network width
+	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
+	fmt.Println("Training fractal network with increased sub-network width...")
+	trainerFractal.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+
+	// Evaluate both networks
+	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
+	fractalAcc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+	fmt.Printf("Baseline accuracy: %.2f%%\n", baselineAcc*100)
+	fmt.Printf("Fractal accuracy (increased width): %.2f%%\n", fractalAcc*100)
+
+	// Append results to file
+	result := fmt.Sprintf("Experiment 44: Hierarchical XOR with Increased Sub-Network Width\nBaseline Accuracy: %.2f%%\nFractal Accuracy: %.2f%%\n\n",
+		baselineAcc*100, fractalAcc*100)
+	if _, err := file.WriteString(result); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+}
+
+// Experiment 45: Minor Learning Rate Adjustment for Sparse Feature Detection
+func experiment45(file *os.File) {
+	fmt.Println("\n=== Experiment 45: Sparse Feature Detection with Reduced Learning Rate ===")
+
+	// Define main network architecture (same as Experiment 7)
+	layerSizes := []struct{ Width, Height int }{{64, 1}, {128, 1}, {2, 1}}
+	activations := []string{"linear", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true}
+
+	// Create baseline and fractal networks
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+
+	// Define sub-network (same as original Experiment 7)
+	subLayerSizes := []struct{ Width, Height int }{{1, 1}, {10, 1}, {1, 1}}
+	subActivations := []string{"linear", "relu", "linear"}
+	subFullyConnected := []bool{true, true, true}
+	opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
+
+	// Apply sub-network to layer 1 of the fractal network
+	fractalNet.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
+
+	// Generate Sparse Feature Detection datasets
+	trainInputs, trainTargets := generateSparseFeatures(1000)
+	valInputs, valTargets := generateSparseFeatures(200)
+
+	// Training configuration with reduced learning rate
+	trainCfg := paragon.TrainConfig{Epochs: 300, LearningRate: 0.004} // Reduced from 0.005
+
+	// Train baseline network
+	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
+	fmt.Println("Training baseline network...")
+	trainerBaseline.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+
+	// Train fractal network with reduced learning rate
+	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
+	fmt.Println("Training fractal network with reduced learning rate...")
+	trainerFractal.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+
+	// Evaluate both networks
+	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
+	fractalAcc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+	fmt.Printf("Baseline accuracy: %.2f%%\n", baselineAcc*100)
+	fmt.Printf("Fractal accuracy (reduced learning rate): %.2f%%\n", fractalAcc*100)
+
+	// Append results to file
+	result := fmt.Sprintf("Experiment 45: Sparse Feature Detection with Reduced Learning Rate\nBaseline Accuracy: %.2f%%\nFractal Accuracy: %.2f%%\n\n",
+		baselineAcc*100, fractalAcc*100)
+	if _, err := file.WriteString(result); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+}
+
+func experiment46(file *os.File) {
+	fmt.Println("\n=== Experiment 46: Exploring Neuron Dimension Configurations ===")
+
+	// Use the Hierarchical XOR task as our benchmark.
+	// Main network architecture (same as Experiment 4):
+	layerSizes := []struct{ Width, Height int }{{16, 1}, {32, 1}, {2, 1}}
+	activations := []string{"linear", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true}
+
+	// Generate Hierarchical XOR datasets.
+	trainInputs, trainTargets := generateHierarchicalXOR(1000)
+	valInputs, valTargets := generateHierarchicalXOR(200)
+
+	// Define training configuration.
+	trainCfg := paragon.TrainConfig{Epochs: 30, LearningRate: 0.001}
+
+	// Train a baseline network for comparison.
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
+	fmt.Println("Training baseline network for comparison...")
+	trainerBaseline.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
+	fmt.Printf("Baseline accuracy: %.2f%%\n", baselineAcc*100)
+	if _, err := file.WriteString(fmt.Sprintf("Experiment 46 Baseline Accuracy: %.2f%%\n\n", baselineAcc*100)); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	// Define ranges for sub-network configurations.
+	depths := []int{2, 3, 4, 5, 6} // Number of sub-layers (input and output are always present)
+	widths := []int{2, 4, 6, 8}    // Width (number of neurons) in hidden sub-layers
+
+	// Iterate over each configuration.
+	for _, depth := range depths {
+		for _, width := range widths {
+			// Create a new fractal network for each configuration.
+			fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+
+			// Build sub-network configuration:
+			// The sub-network is defined as a sequence of layers.
+			// The first layer is a single neuron (the input for the dimension).
+			// For depths > 2, add hidden layers each of the specified width.
+			// The last layer is again a single neuron (output).
+			subLayerSizes := make([]struct{ Width, Height int }, depth)
+			subActivations := make([]string, depth)
+			subFullyConnected := make([]bool, depth)
+
+			// Input sub-layer: always 1 neuron.
+			subLayerSizes[0] = struct{ Width, Height int }{1, 1}
+			subActivations[0] = "linear"
+			subFullyConnected[0] = true
+
+			// Hidden sub-layers (if depth > 2).
+			for i := 1; i < depth-1; i++ {
+				subLayerSizes[i] = struct{ Width, Height int }{width, 1}
+				subActivations[i] = "relu"
+				subFullyConnected[i] = true
+			}
+
+			// Output sub-layer: always 1 neuron.
+			if depth > 1 {
+				subLayerSizes[depth-1] = struct{ Width, Height int }{1, 1}
+				subActivations[depth-1] = "linear"
+				subFullyConnected[depth-1] = true
+			}
+
+			opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
+			fractalNet.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
+
+			// Train the fractal network.
+			trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
+			fmt.Printf("Training fractal network (depth=%d, width=%d)...\n", depth, width)
+			trainerFractal.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+			fractalAcc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+			fmt.Printf("Config (depth=%d, width=%d): Fractal accuracy: %.2f%%\n", depth, width, fractalAcc*100)
+
+			// Append the result to file.
+			result := fmt.Sprintf("Experiment 46: Config (depth=%d, width=%d): Fractal Accuracy: %.2f%%\n", depth, width, fractalAcc*100)
+			if _, err := file.WriteString(result); err != nil {
+				fmt.Printf("Error writing to file: %v\n", err)
+			}
+		}
+	}
+}
+
+func experiment47(file *os.File) {
+	fmt.Println("\n=== Experiment 47: Learning Rate and Epochs Sweep for Fractal Network ===")
+
+	// Use the Hierarchical XOR task as in previous experiments.
+	layerSizes := []struct{ Width, Height int }{
+		{Width: 16, Height: 1},
+		{Width: 32, Height: 1},
+		{Width: 2, Height: 1},
+	}
+	activations := []string{"linear", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true}
+
+	// Generate Hierarchical XOR datasets.
+	trainInputs, trainTargets := generateHierarchicalXOR(1000)
+	valInputs, valTargets := generateHierarchicalXOR(200)
+
+	// Train a baseline network for reference.
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	baselineTrainCfg := paragon.TrainConfig{Epochs: 30, LearningRate: 0.001}
+	baselineTrainer := paragon.Trainer{Network: baselineNet, Config: baselineTrainCfg}
+	fmt.Println("Training baseline network...")
+	baselineTrainer.TrainSimple(trainInputs, trainTargets, baselineTrainCfg.Epochs)
+	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
+	fmt.Printf("Baseline Accuracy: %.2f%%\n", baselineAcc*100)
+	if _, err := file.WriteString(fmt.Sprintf("Experiment 47 Baseline Accuracy: %.2f%%\n\n", baselineAcc*100)); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	// Choose a fixed fractal sub-network configuration.
+	// Here we choose depth = 2 (i.e. a simple two-layer sub-network) and we assume the best configuration from Experiment 46 was achieved with an effective width of 6.
+	// (For a two-layer sub-network, both layers have 1 neuron: the first layer is the input and the second is the output.
+	// You might consider increasing depth if you wish to add hidden transformations.)
+	subLayerSizes := []struct{ Width, Height int }{
+		{Width: 1, Height: 1}, // sub-network input layer (1 neuron)
+		{Width: 1, Height: 1}, // sub-network output layer (1 neuron)
+	}
+	subActivations := []string{"linear", "linear"}
+	subFullyConnected := []bool{true, true}
+	opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
+
+	// Define a grid over learning rates and epoch counts.
+	learningRates := []float64{0.0005, 0.001, 0.002}
+	epochCounts := []int{30, 50, 100}
+	numTrials := 3
+
+	// For each combination, we create a new fractal network, attach the sub-network, and train.
+	for _, lr := range learningRates {
+		for _, epochs := range epochCounts {
+			totalAcc := 0.0
+			for trial := 0; trial < numTrials; trial++ {
+				// Initialize a new fractal network.
+				fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+				fractalNet.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
+
+				trainCfg := paragon.TrainConfig{Epochs: epochs, LearningRate: lr}
+				trainer := paragon.Trainer{Network: fractalNet, Config: trainCfg}
+				fmt.Printf("Trial %d: Training fractal network with lr=%.4f, epochs=%d...\n", trial+1, lr, epochs)
+				trainer.TrainSimple(trainInputs, trainTargets, epochs)
+				acc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+				totalAcc += acc
+			}
+			avgAcc := totalAcc / float64(numTrials)
+			result := fmt.Sprintf("Experiment 47: lr=%.4f, epochs=%d -> Average Fractal Accuracy: %.2f%%\n", lr, epochs, avgAcc*100)
+			fmt.Print(result)
+			if _, err := file.WriteString(result); err != nil {
+				fmt.Printf("Error writing to file: %v\n", err)
+			}
+		}
+	}
+}
+
+func experiment48(file *os.File) {
+	fmt.Println("\n=== Experiment 48: Varying Sub-Network Depth and Width with Baseline Comparison ===")
+
+	// Define the main network architecture as before.
+	layerSizes := []struct{ Width, Height int }{
+		{16, 1},
+		{32, 1},
+		{2, 1},
+	}
+	activations := []string{"linear", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true}
+
+	// Generate the Hierarchical XOR datasets.
+	trainInputs, trainTargets := generateHierarchicalXOR(1000)
+	valInputs, valTargets := generateHierarchicalXOR(200)
+
+	// Use a fixed training configuration.
+	trainCfg := paragon.TrainConfig{Epochs: 50, LearningRate: 0.002}
+
+	// Train the baseline network (without any fractal sub-network).
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	baselineTrainer := paragon.Trainer{Network: baselineNet, Config: trainCfg}
+	fmt.Println("Training baseline network...")
+	baselineTrainer.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
+	baselineResult := fmt.Sprintf("Baseline Accuracy: %.2f%%\n\n", baselineAcc*100)
+	fmt.Print(baselineResult)
+	if _, err := file.WriteString(baselineResult); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+
+	// Define ranges for the fractal sub-network configuration.
+	// 'depth' is the total number of sub-layers (including input and output).
+	// 'width' is the number of neurons in each hidden sub-layer (if any).
+	depths := []int{2, 3, 4, 5, 6}
+	widths := []int{4, 6, 8, 10}
+
+	// Loop over each combination of depth and width.
+	for _, depth := range depths {
+		for _, width := range widths {
+			// Build the sub-network configuration.
+			subLayerSizes := make([]struct{ Width, Height int }, depth)
+			subActivations := make([]string, depth)
+			subFullyConnected := make([]bool, depth)
+
+			// Input sub-layer: always 1 neuron.
+			subLayerSizes[0] = struct{ Width, Height int }{1, 1}
+			subActivations[0] = "linear"
+			subFullyConnected[0] = true
+
+			// Hidden sub-layers (if depth > 2).
+			for i := 1; i < depth-1; i++ {
+				subLayerSizes[i] = struct{ Width, Height int }{width, 1}
+				subActivations[i] = "relu"
+				subFullyConnected[i] = true
+			}
+
+			// Output sub-layer: always 1 neuron.
+			if depth > 1 {
+				subLayerSizes[depth-1] = struct{ Width, Height int }{1, 1}
+				subActivations[depth-1] = "linear"
+				subFullyConnected[depth-1] = true
+			}
+
+			opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
+
+			// Initialize a new fractal network and attach the sub-network to layer 1.
+			fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+			fractalNet.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
+
+			// Train the fractal network.
+			fractalTrainer := paragon.Trainer{Network: fractalNet, Config: trainCfg}
+			fmt.Printf("Training fractal network (depth=%d, width=%d)...\n", depth, width)
+			fractalTrainer.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+			fractalAcc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+
+			// Output results for this configuration.
+			result := fmt.Sprintf("Config (depth=%d, width=%d): Fractal Accuracy: %.2f%% (Baseline: %.2f%%)\n", depth, width, fractalAcc*100, baselineAcc*100)
+			fmt.Print(result)
+			if _, err := file.WriteString(result); err != nil {
+				fmt.Printf("Error writing to file: %v\n", err)
+			}
+		}
+	}
+}
+
+func experiment49(file *os.File) {
+	fmt.Println("\n=== Experiment 49: Fine-Tuning Around Promising Fractal Configurations ===")
+
+	// Main network architecture (Hierarchical XOR)
+	layerSizes := []struct{ Width, Height int }{
+		{16, 1},
+		{32, 1},
+		{2, 1},
+	}
+	activations := []string{"linear", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true}
+
+	// Generate Hierarchical XOR datasets.
+	trainInputs, trainTargets := generateHierarchicalXOR(1000)
+	valInputs, valTargets := generateHierarchicalXOR(200)
+
+	// Fixed training configuration (based on previous experiments).
+	trainCfg := paragon.TrainConfig{Epochs: 50, LearningRate: 0.002}
+
+	// Train a baseline network for reference.
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	baselineTrainer := paragon.Trainer{Network: baselineNet, Config: trainCfg}
+	fmt.Println("Training baseline network...")
+	baselineTrainer.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
+	fmt.Printf("Baseline Accuracy: %.2f%%\n\n", baselineAcc*100)
+	file.WriteString(fmt.Sprintf("Experiment 49 Baseline Accuracy: %.2f%%\n\n", baselineAcc*100))
+
+	// Define a narrow sweep around the promising configuration.
+	depths := []int{3}         // Focusing on depth=3.
+	widths := []int{9, 10, 11} // Fine-tuning the width around 10.
+
+	for _, depth := range depths {
+		for _, width := range widths {
+			// Build the fractal sub-network configuration.
+			subLayerSizes := make([]struct{ Width, Height int }, depth)
+			subActivations := make([]string, depth)
+			subFullyConnected := make([]bool, depth)
+
+			// Input sub-layer.
+			subLayerSizes[0] = struct{ Width, Height int }{1, 1}
+			subActivations[0] = "linear"
+			subFullyConnected[0] = true
+
+			// Hidden sub-layer(s).
+			for i := 1; i < depth-1; i++ {
+				subLayerSizes[i] = struct{ Width, Height int }{width, 1}
+				subActivations[i] = "relu"
+				subFullyConnected[i] = true
+			}
+
+			// Output sub-layer.
+			subLayerSizes[depth-1] = struct{ Width, Height int }{1, 1}
+			subActivations[depth-1] = "linear"
+			subFullyConnected[depth-1] = true
+
+			opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
+
+			// Initialize fractal network.
+			fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+			fractalNet.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
+
+			// Train the fractal network.
+			fractalTrainer := paragon.Trainer{Network: fractalNet, Config: trainCfg}
+			fmt.Printf("Training fractal network (depth=%d, width=%d)...\n", depth, width)
+			fractalTrainer.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+			acc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+			result := fmt.Sprintf("Config (depth=%d, width=%d): Fractal Accuracy: %.2f%% (Baseline: %.2f%%)\n", depth, width, acc*100, baselineAcc*100)
+			fmt.Print(result)
+			file.WriteString(result)
+		}
 	}
 }

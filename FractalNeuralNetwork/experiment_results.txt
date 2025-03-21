@@ -448,3 +448,306 @@ Fractal Accuracy (layer 5, 4 sub-layers, trial 4, long): 48.00%
 Fractal Accuracy (layer 5, 4 sub-layers, trial 5, long): 52.50%
 Fractal Average Accuracy (layer 5, 4 sub-layers, long): 51.00%
 
+
+=== Experiment Run: 2025-03-21 17:56:06 ===
+Experiment 44: Hierarchical XOR with Increased Sub-Network Width
+Baseline Accuracy: 57.00%
+Fractal Accuracy: 47.50%
+
+Experiment 45: Sparse Feature Detection with Reduced Learning Rate
+Baseline Accuracy: 95.00%
+Fractal Accuracy: 91.50%
+
+
+=== Experiment Run: 2025-03-21 17:58:02 ===
+Experiment 44: Hierarchical XOR with Increased Sub-Network Width
+Baseline Accuracy: 55.00%
+Fractal Accuracy: 51.50%
+
+
+=== Experiment Run: 2025-03-21 18:00:15 ===
+Experiment 46 Baseline Accuracy: 49.00%
+
+Experiment 46: Config (depth=2, width=2): Fractal Accuracy: 46.00%
+Experiment 46: Config (depth=2, width=4): Fractal Accuracy: 49.50%
+Experiment 46: Config (depth=2, width=6): Fractal Accuracy: 50.50%
+Experiment 46: Config (depth=2, width=8): Fractal Accuracy: 43.00%
+Experiment 46: Config (depth=3, width=2): Fractal Accuracy: 46.00%
+Experiment 46: Config (depth=3, width=4): Fractal Accuracy: 48.00%
+Experiment 46: Config (depth=3, width=6): Fractal Accuracy: 45.50%
+Experiment 46: Config (depth=3, width=8): Fractal Accuracy: 46.00%
+Experiment 46: Config (depth=4, width=2): Fractal Accuracy: 45.50%
+Experiment 46: Config (depth=4, width=4): Fractal Accuracy: 40.50%
+Experiment 46: Config (depth=4, width=6): Fractal Accuracy: 45.00%
+Experiment 46: Config (depth=4, width=8): Fractal Accuracy: 44.50%
+Experiment 46: Config (depth=5, width=2): Fractal Accuracy: 45.50%
+Experiment 46: Config (depth=5, width=4): Fractal Accuracy: 43.00%
+Experiment 46: Config (depth=5, width=6): Fractal Accuracy: 44.00%
+Experiment 46: Config (depth=5, width=8): Fractal Accuracy: 50.00%
+Experiment 46: Config (depth=6, width=2): Fractal Accuracy: 46.00%
+Experiment 46: Config (depth=6, width=4): Fractal Accuracy: 46.50%
+Experiment 46: Config (depth=6, width=6): Fractal Accuracy: 47.00%
+Experiment 46: Config (depth=6, width=8): Fractal Accuracy: 46.00%
+
+=== Experiment Run: 2025-03-21 18:03:25 ===
+Experiment 47 Baseline Accuracy: 49.00%
+
+Experiment 47: lr=0.0005, epochs=30 -> Average Fractal Accuracy: 52.83%
+Experiment 47: lr=0.0005, epochs=50 -> Average Fractal Accuracy: 50.33%
+Experiment 47: lr=0.0005, epochs=100 -> Average Fractal Accuracy: 51.17%
+Experiment 47: lr=0.0010, epochs=30 -> Average Fractal Accuracy: 52.00%
+Experiment 47: lr=0.0010, epochs=50 -> Average Fractal Accuracy: 49.83%
+Experiment 47: lr=0.0010, epochs=100 -> Average Fractal Accuracy: 52.50%
+Experiment 47: lr=0.0020, epochs=30 -> Average Fractal Accuracy: 51.50%
+Experiment 47: lr=0.0020, epochs=50 -> Average Fractal Accuracy: 53.50%
+Experiment 47: lr=0.0020, epochs=100 -> Average Fractal Accuracy: 52.17%
+
+
+
+
+=== Experiment Run: 2025-03-21 18:44:26 ===
+Baseline Accuracy: 51.50%
+
+Config (depth=2, width=4): Fractal Accuracy: 51.00% (Baseline: 51.50%)
+Config (depth=2, width=6): Fractal Accuracy: 48.50% (Baseline: 51.50%)
+Config (depth=2, width=8): Fractal Accuracy: 50.00% (Baseline: 51.50%)
+Config (depth=2, width=10): Fractal Accuracy: 52.00% (Baseline: 51.50%)
+Config (depth=3, width=4): Fractal Accuracy: 55.00% (Baseline: 51.50%)
+Config (depth=3, width=6): Fractal Accuracy: 51.00% (Baseline: 51.50%)
+Config (depth=3, width=8): Fractal Accuracy: 51.00% (Baseline: 51.50%)
+Config (depth=3, width=10): Fractal Accuracy: 56.50% (Baseline: 51.50%)
+Config (depth=4, width=4): Fractal Accuracy: 53.00% (Baseline: 51.50%)
+Config (depth=4, width=6): Fractal Accuracy: 52.00% (Baseline: 51.50%)
+Config (depth=4, width=8): Fractal Accuracy: 49.00% (Baseline: 51.50%)
+Config (depth=4, width=10): Fractal Accuracy: 46.00% (Baseline: 51.50%)
+Config (depth=5, width=4): Fractal Accuracy: 45.50% (Baseline: 51.50%)
+Config (depth=5, width=6): Fractal Accuracy: 51.00% (Baseline: 51.50%)
+Config (depth=5, width=8): Fractal Accuracy: 50.50% (Baseline: 51.50%)
+Config (depth=5, width=10): Fractal Accuracy: 47.50% (Baseline: 51.50%)
+Config (depth=6, width=4): Fractal Accuracy: 52.50% (Baseline: 51.50%)
+Config (depth=6, width=6): Fractal Accuracy: 51.00% (Baseline: 51.50%)
+Config (depth=6, width=8): Fractal Accuracy: 52.00% (Baseline: 51.50%)
+Config (depth=6, width=10): Fractal Accuracy: 52.00% (Baseline: 51.50%)
+
+=== Experiment Run: 2025-03-21 18:46:44 ===
+Experiment 49 Baseline Accuracy: 57.00%
+
+Config (depth=3, width=9): Fractal Accuracy: 49.00% (Baseline: 57.00%)
+Config (depth=3, width=10): Fractal Accuracy: 50.50% (Baseline: 57.00%)
+Config (depth=3, width=11): Fractal Accuracy: 53.50% (Baseline: 57.00%)
+
+=== Experiment Run: 2025-03-21 18:48:40 ===
+Experiment 50 Baseline Accuracy: 49.50%
+
+Enhanced Fractal Accuracy: 52.00% (Baseline: 49.50%)
+
+=== Experiment Run: 2025-03-21 18:50:27 ===
+Experiment 51 Baseline Accuracy: 52.50%
+
+Experiment 51: residual=false, outputActivation=tanh, hiddenActivation=relu -> Fractal Accuracy: 49.00% (Baseline: 52.50%)
+Experiment 51: residual=false, outputActivation=elu, hiddenActivation=relu -> Fractal Accuracy: 56.00% (Baseline: 52.50%)
+Experiment 51: residual=false, outputActivation=leaky_relu, hiddenActivation=relu -> Fractal Accuracy: 49.50% (Baseline: 52.50%)
+Experiment 51: residual=true, outputActivation=tanh, hiddenActivation=relu -> Fractal Accuracy: 53.00% (Baseline: 52.50%)
+Experiment 51: residual=true, outputActivation=leaky_relu, hiddenActivation=tanh -> Fractal Accuracy: 48.00% (Baseline: 52.50%)
+Experiment 51: residual=true, outputActivation=leaky_relu, hiddenActivation=relu -> Fractal Accuracy: 52.00% (Baseline: 52.50%)
+Experiment 51: residual=true, outputActivation=elu, hiddenActivation=relu -> Fractal Accuracy: 50.50% (Baseline: 52.50%)
+Experiment 51: residual=false, outputActivation=elu, hiddenActivation=tanh -> Fractal Accuracy: 53.00% (Baseline: 52.50%)
+Experiment 51: residual=true, outputActivation=elu, hiddenActivation=tanh -> Fractal Accuracy: 54.50% (Baseline: 52.50%)
+Experiment 51: residual=false, outputActivation=leaky_relu, hiddenActivation=tanh -> Fractal Accuracy: 49.50% (Baseline: 52.50%)
+Experiment 51: residual=false, outputActivation=tanh, hiddenActivation=tanh -> Fractal Accuracy: 49.50% (Baseline: 52.50%)
+Experiment 51: residual=true, outputActivation=tanh, hiddenActivation=tanh -> Fractal Accuracy: 50.50% (Baseline: 52.50%)
+
+
+=== Experiment Run: 2025-03-21 18:51:54 ===
+Experiment 52 Baseline Accuracy: 53.00%
+
+Experiment 52: depth=3, width=9, residual=false, output=tanh, hidden=relu -> Fractal Accuracy: 49.00% (Baseline: 53.00%)
+Experiment 52: depth=3, width=9, residual=false, output=elu, hidden=relu -> Fractal Accuracy: 56.50% (Baseline: 53.00%)
+Experiment 52: depth=3, width=10, residual=true, output=tanh, hidden=relu -> Fractal Accuracy: 45.00% (Baseline: 53.00%)
+Experiment 52: depth=3, width=10, residual=false, output=tanh, hidden=relu -> Fractal Accuracy: 49.00% (Baseline: 53.00%)
+Experiment 52: depth=3, width=9, residual=true, output=tanh, hidden=relu -> Fractal Accuracy: 47.50% (Baseline: 53.00%)
+Experiment 52: depth=3, width=11, residual=false, output=tanh, hidden=relu -> Fractal Accuracy: 44.50% (Baseline: 53.00%)
+Experiment 52: depth=3, width=10, residual=true, output=elu, hidden=relu -> Fractal Accuracy: 52.50% (Baseline: 53.00%)
+Experiment 52: depth=3, width=11, residual=true, output=tanh, hidden=relu -> Fractal Accuracy: 46.00% (Baseline: 53.00%)
+Experiment 52: depth=3, width=10, residual=false, output=elu, hidden=relu -> Fractal Accuracy: 45.00% (Baseline: 53.00%)
+Experiment 52: depth=3, width=9, residual=true, output=elu, hidden=relu -> Fractal Accuracy: 47.50% (Baseline: 53.00%)
+Experiment 52: depth=3, width=11, residual=true, output=elu, hidden=relu -> Fractal Accuracy: 46.50% (Baseline: 53.00%)
+Experiment 52: depth=3, width=11, residual=false, output=elu, hidden=relu -> Fractal Accuracy: 48.00% (Baseline: 53.00%)
+Experiment 52: depth=4, width=9, residual=true, output=tanh, hidden=relu -> Fractal Accuracy: 45.50% (Baseline: 53.00%)
+Experiment 52: depth=4, width=9, residual=false, output=tanh, hidden=relu -> Fractal Accuracy: 46.00% (Baseline: 53.00%)
+Experiment 52: depth=4, width=9, residual=true, output=elu, hidden=relu -> Fractal Accuracy: 44.50% (Baseline: 53.00%)
+Experiment 52: depth=4, width=9, residual=false, output=elu, hidden=relu -> Fractal Accuracy: 49.50% (Baseline: 53.00%)
+Experiment 52: depth=4, width=10, residual=false, output=elu, hidden=relu -> Fractal Accuracy: 45.00% (Baseline: 53.00%)
+Experiment 52: depth=4, width=10, residual=false, output=tanh, hidden=relu -> Fractal Accuracy: 45.50% (Baseline: 53.00%)
+Experiment 52: depth=4, width=10, residual=true, output=elu, hidden=relu -> Fractal Accuracy: 49.50% (Baseline: 53.00%)
+Experiment 52: depth=4, width=10, residual=true, output=tanh, hidden=relu -> Fractal Accuracy: 49.00% (Baseline: 53.00%)
+Experiment 52: depth=4, width=11, residual=false, output=tanh, hidden=relu -> Fractal Accuracy: 51.00% (Baseline: 53.00%)
+Experiment 52: depth=4, width=11, residual=true, output=elu, hidden=relu -> Fractal Accuracy: 44.00% (Baseline: 53.00%)
+Experiment 52: depth=4, width=11, residual=true, output=tanh, hidden=relu -> Fractal Accuracy: 43.50% (Baseline: 53.00%)
+Experiment 52: depth=4, width=11, residual=false, output=elu, hidden=relu -> Fractal Accuracy: 46.00% (Baseline: 53.00%)
+
+=== Experiment Run: 2025-03-21 19:00:45 ===
+Experiment 53 Baseline Accuracy: 46.50%
+
+Experiment 53 (Explicit residual added): hiddenWidth=9, residual=true, outputActivation=elu -> Fractal Accuracy: 47.50% (Baseline: 46.50%)
+Experiment 53 (Best from Exp52 (no residual)): hiddenWidth=9, residual=false, outputActivation=elu -> Fractal Accuracy: 41.50% (Baseline: 46.50%)
+Experiment 53 (Slightly wider without residual): hiddenWidth=10, residual=false, outputActivation=elu -> Fractal Accuracy: 42.50% (Baseline: 46.50%)
+Experiment 53 (Wider with residual): hiddenWidth=10, residual=true, outputActivation=elu -> Fractal Accuracy: 50.00% (Baseline: 46.50%)
+
+
+=== Experiment Run: 2025-03-21 19:14:33 ===
+Experiment 55 Baseline Accuracy: 47.50%
+
+Experiment 55 (No residual, depth=2, width=11): Fractal Accuracy: 48.00% (Baseline: 47.50%)
+Experiment 55 (Explicit residual, depth=2, width=11): Fractal Accuracy: 52.50% (Baseline: 47.50%)
+
+=== Experiment Run: 2025-03-21 19:16:24 ===
+Experiment 56 Baseline Accuracy: 49.00%
+
+Experiment 56 (Explicit Residual, adaptive LR): Fractal Accuracy: 49.50% (Baseline: 49.00%)
+
+
+
+=== Experiment Run: 2025-03-21 19:44:26 ===
+
+Experiment 58 Best Candidate Accuracy: 59.50%
+
+
+=== Experiment Run: 2025-03-21 19:51:20 ===
+Experiment 58 Best Candidate Accuracy: 57.00%
+
+=== Experiment Run: 2025-03-21 19:51:37 ===
+Experiment 58 Best Candidate Accuracy: 62.00%
+
+=== Experiment Run: 2025-03-21 19:51:46 ===
+Experiment 58 Best Candidate Accuracy: 62.00%
+
+=== Experiment Run: 2025-03-21 19:52:27 ===
+Experiment 58 Best Candidate Accuracy: 58.00%
+
+=== Experiment Run: 2025-03-21 19:52:47 ===
+Experiment 58 Best Candidate Accuracy: 60.50%
+
+=== Experiment Run: 2025-03-21 19:53:29 ===
+Experiment 58 Best Candidate Accuracy: 60.00%
+
+=== Experiment Run: 2025-03-21 19:54:29 ===
+
+=== Experiment Run: 2025-03-21 19:54:49 ===
+Experiment 58 Best Candidate Accuracy: 61.50%
+
+=== Experiment Run: 2025-03-21 19:55:58 ===
+Experiment 58 Best Candidate Accuracy: 61.00%
+
+=== Experiment Run: 2025-03-21 19:57:53 ===
+Experiment 58 Best Candidate Accuracy: 61.00%
+
+=== Experiment Run: 2025-03-21 20:01:31 ===
+Experiment 58 Best Candidate Accuracy: 60.00%
+
+=== Experiment Run: 2025-03-21 20:04:32 ===
+Experiment 58 Best Candidate Accuracy: 60.00%
+
+=== Experiment Run: 2025-03-21 20:08:00 ===
+Experiment 58 Best Candidate Accuracy: 58.50%
+
+=== Experiment Run: 2025-03-21 20:09:02 ===
+Experiment 58 Best Candidate Accuracy: 60.50%
+
+=== Experiment Run: 2025-03-21 20:09:38 ===
+Experiment 58 Best Candidate Accuracy: 61.00%
+
+=== Experiment Run: 2025-03-21 20:10:32 ===
+Experiment 58 Best Candidate Accuracy: 64.50%
+
+=== Experiment Run: 2025-03-21 20:11:22 ===
+Experiment 58 Best Candidate Accuracy: 56.50%
+
+=== Experiment Run: 2025-03-21 20:12:04 ===
+Experiment 58 Best Candidate Accuracy: 59.50%
+
+=== Experiment Run: 2025-03-21 20:12:45 ===
+Experiment 58 Best Candidate Accuracy: 58.00%
+
+=== Experiment Run: 2025-03-21 20:13:26 ===
+
+=== Experiment Run: 2025-03-21 20:15:21 ===
+Experiment 58 Best Candidate Accuracy: 60.50%
+
+=== Experiment Run: 2025-03-21 20:15:43 ===
+Experiment 58 Best Candidate Accuracy: 58.50%
+
+=== Experiment Run: 2025-03-21 20:15:53 ===
+Experiment 58 Best Candidate Accuracy: 58.50%
+
+=== Experiment Run: 2025-03-21 20:16:16 ===
+
+=== Experiment Run: 2025-03-21 20:16:34 ===
+
+=== Experiment Run: 2025-03-21 20:17:00 ===
+Experiment 58 Best Candidate Accuracy: 50.50%
+
+=== Experiment Run: 2025-03-21 20:17:18 ===
+Experiment 58 Best Candidate Accuracy: 61.00%
+
+=== Experiment Run: 2025-03-21 20:17:22 ===
+Experiment 58 Best Candidate Accuracy: 44.50%
+
+=== Experiment Run: 2025-03-21 20:17:25 ===
+Experiment 58 Best Candidate Accuracy: 56.50%
+
+=== Experiment Run: 2025-03-21 20:17:38 ===
+Experiment 58 Best Candidate Accuracy: 62.00%
+
+=== Experiment Run: 2025-03-21 20:18:15 ===
+Experiment 58 Best Candidate Accuracy: 59.00%
+
+=== Experiment Run: 2025-03-21 20:18:54 ===
+Experiment 58 Best Candidate Accuracy: 63.00%
+
+=== Experiment Run: 2025-03-21 20:19:10 ===
+Experiment 58 Best Candidate Accuracy: 63.50%
+
+=== Experiment Run: 2025-03-21 20:19:31 ===
+Experiment 58 Best Candidate Accuracy: 61.50%
+
+=== Experiment Run: 2025-03-21 20:22:12 ===
+Experiment 58 Best Candidate Accuracy: 61.50%
+
+=== Experiment Run: 2025-03-21 20:25:25 ===
+Experiment 58 Best Candidate Accuracy: 62.50%
+
+=== Experiment Run: 2025-03-21 20:26:51 ===
+Experiment 58 Best Candidate Accuracy: 57.50%
+
+=== Experiment Run: 2025-03-21 20:27:03 ===
+Experiment 58 Best Candidate Accuracy: 57.00%
+
+=== Experiment Run: 2025-03-21 20:27:56 ===
+Experiment 58 Best Candidate Accuracy: 62.50%
+
+=== Experiment Run: 2025-03-21 20:28:18 ===
+Experiment 58 Best Candidate Accuracy: 62.00%
+
+=== Experiment Run: 2025-03-21 20:29:45 ===
+Experiment 58 Best Candidate Accuracy: 57.50%
+
+=== Experiment Run: 2025-03-21 20:30:14 ===
+Experiment 58 Best Candidate Accuracy: 60.50%
+
+=== Experiment Run: 2025-03-21 20:31:02 ===
+Experiment 58 Best Candidate Accuracy: 63.00%
+
+=== Experiment Run: 2025-03-21 20:31:14 ===
+Experiment 58 Best Candidate Accuracy: 59.50%
+
+=== Experiment Run: 2025-03-21 20:31:57 ===
+Experiment 58 Best Candidate Accuracy: 58.00%
+
+=== Experiment Run: 2025-03-21 20:32:35 ===
+
+=== Experiment Run: 2025-03-21 20:36:15 ===
+Experiment 58 Best Candidate Accuracy: 57.00%
+
+=== Experiment Run: 2025-03-21 20:37:08 ===
+Experiment 58 Best Candidate Accuracy: 58.00%
