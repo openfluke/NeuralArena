@@ -78,3 +78,89 @@ Experiment 18: Long-Range Context
 Baseline Accuracy: 50.50%
 Fractal Accuracy: 53.50%
 
+
+=== Experiment Run: 2025-03-21 14:21:43 ===
+Experiment 19: Deep Nested XOR (3-Level)
+Baseline Accuracy: 52.50%
+Fractal Accuracy: 50.00%
+
+
+=== Experiment Run: 2025-03-21 15:03:25 ===
+Experiment 25: Deep Fractal XOR Tree
+Baseline Accuracy: 49.50%
+Fractal Accuracy: 52.75%
+
+Experiment 26: Nested Polynomial Chaos
+Baseline Accuracy: 100.00%
+Fractal Accuracy: 100.00%
+
+Experiment 27: Multi-Scale Temporal Fractals
+Baseline Accuracy: 97.75%
+Fractal Accuracy: 98.75%
+
+Experiment 28: Recursive Contextual Switching
+Baseline Accuracy: 62.75%
+Fractal Accuracy: 62.75%
+
+Experiment 29: Fractal Noise Interpolation
+Baseline Accuracy: 98.25%
+Fractal Accuracy: 97.00%
+
+
+
+=== Experiment Run: 2025-03-21 15:43:19 ===
+Experiment 30: Hierarchical Binary Classification
+Baseline Accuracy: 99.00%
+Fractal Accuracy: 99.50%
+
+Experiment 31: Multi-Scale Signal Prediction
+Baseline MSE: 0.0001
+Fractal MSE: 0.0006
+
+Experiment 32: Contextual Sequence Matching
+Baseline Accuracy: 97.50%
+Fractal Accuracy: 97.00%
+
+
+
+=== Experiment Run: 2025-03-21 15:52:19 ===
+Experiment 33: Enhanced Deep Hierarchy
+Baseline Accuracy: 52.50%
+Fractal Accuracy: 49.50%
+
+Experiment 34: Advanced Multi-Modal Fusion
+Baseline Accuracy: 98.50%
+Fractal Accuracy: 98.00%
+
+Experiment 36: Complex Feature Composition
+Baseline Accuracy: 86.50%
+Fractal Accuracy: 90.00%
+
+Experiment 37: Extended Long-Range Context
+Baseline Accuracy: 51.50%
+Fractal Accuracy: 48.50%
+
+
+=== Experiment Run: 2025-03-21 15:57:51 ===
+Experiment 38: Ultra-Complex Feature Composition
+Baseline Accuracy: 83.00%
+Fractal Accuracy: 85.00%
+
+
+//increasing epocs on 38 37 33 to 200epochs
+
+=== Experiment Run: 2025-03-21 16:01:28 ===
+Experiment 33: Enhanced Deep Hierarchy
+Baseline Accuracy: 57.00%
+Fractal Accuracy: 58.00%
+
+Experiment 37: Extended Long-Range Context
+Baseline Accuracy: 48.00%
+Fractal Accuracy: 47.00%
+
+Experiment 38: Ultra-Complex Feature Composition
+Baseline Accuracy: 87.50%
+Fractal Accuracy: 85.00%
+
+
+//increasing epocs on 37 33 to 1000epochs
