@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"sync"
 	"time"
 
 	"paragon"
@@ -74,10 +75,11 @@ func main() {
 	//experimentContextualSequences(file)
 
 	// Add the new experiment
-	experimentEnhancedDeepHierarchy(file)
+	//experimentEnhancedDeepHierarchy(file)
+	experimentEnhancedDeepHierarchy_2(file)
 	//experimentAdvancedMultiModalFusion(file)
 	//experimentComplexFeatureComposition(file)
-	experimentExtendedLongRangeContext(file)
+	//experimentExtendedLongRangeContext(file)
 
 	//experimentUltraComplexFeatureComposition(file)
 }
@@ -2408,45 +2410,317 @@ func generateEnhancedDeepHierarchy(n int) ([][][]float64, [][][]float64) {
 func experimentEnhancedDeepHierarchy(file *os.File) {
 	fmt.Println("\n=== Experiment 33: Enhanced Deep Hierarchy ===")
 
-	layerSizes := []struct{ Width, Height int }{{32, 1}, {64, 1}, {2, 1}}
-	activations := []string{"linear", "relu", "softmax"}
-	fullyConnected := []bool{true, true, true}
+	// 10-layer outer network
+	layerSizes := []struct{ Width, Height int }{{32, 1}, {64, 1}, {64, 1}, {64, 1}, {32, 1}, {32, 1}, {16, 1}, {16, 1}, {8, 1}, {2, 1}}
+	activations := []string{"linear", "relu", "relu", "relu", "relu", "relu", "relu", "relu", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true, true, true, true, true, true, true, true}
 	opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
 
-	subLayerSizes := []struct{ Width, Height int }{{1, 1}, {8, 1}, {1, 1}}
-	subActivations := []string{"linear", "relu", "linear"}
-	subFullyConnected := []bool{true, true, true}
-
-	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
-	fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
-	fractalNet.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
-	for y := 0; y < fractalNet.Layers[1].Height; y++ {
-		for x := 0; x < fractalNet.Layers[1].Width; x++ {
-			fractalNet.Layers[1].Neurons[y][x].Dimension.SetLayerDimension(1, subLayerSizes, subActivations, subFullyConnected, opts)
-		}
-	}
-
+	// Generate datasets
 	trainInputs, trainTargets := generateEnhancedDeepHierarchy(1000)
 	valInputs, valTargets := generateEnhancedDeepHierarchy(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.001}
+	// Training config
+	trainCfg := paragon.TrainConfig{Epochs: 10, LearningRate: 0.0001, Debug: false}
 
+	// Train baseline network (sequential)
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
-	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
-
 	fmt.Println("Training baseline network...")
 	trainerBaseline.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
 	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
 	fmt.Printf("Baseline accuracy: %.2f%%\n", baselineAcc*100)
 
-	fmt.Println("Training fractal network...")
-	trainerFractal.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
-	fractalAcc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
-	fmt.Printf("Fractal accuracy: %.2f%%\n", fractalAcc*100)
+	// Define range of sub-network depths (3 to 6)
+	minDepth := 3
+	maxDepth := 6
+	fractalAccs := make([][]float64, 8) // 8 layers (1-8), each with 4 depths (3-6)
+	for i := range fractalAccs {
+		fractalAccs[i] = make([]float64, maxDepth-minDepth+1)
+	}
+	var wg sync.WaitGroup
 
-	result := fmt.Sprintf("Experiment 33: Enhanced Deep Hierarchy\nBaseline Accuracy: %.2f%%\nFractal Accuracy: %.2f%%\n\n",
-		baselineAcc*100, fractalAcc*100)
-	file.WriteString(result)
+	// Run 8 parallel loops for layers 1 through 8
+	for layer := 1; layer <= 8; layer++ {
+		wg.Add(1)
+		go func(targetLayer int) {
+			defer wg.Done()
+
+			// Test sub-network depths 3 to 6 for this layer
+			for depth := minDepth; depth <= maxDepth; depth++ {
+				// Dynamically build sub-network
+				subLayerSizes := make([]struct{ Width, Height int }, depth)
+				subActivations := make([]string, depth)
+				subFullyConnected := make([]bool, depth)
+
+				// Input and output layers are always 1 neuron
+				subLayerSizes[0] = struct{ Width, Height int }{1, 1}
+				subLayerSizes[depth-1] = struct{ Width, Height int }{1, 1}
+				subActivations[0] = "leaky_relu"
+				subActivations[depth-1] = "relu"
+				subFullyConnected[0] = true
+				subFullyConnected[depth-1] = true
+
+				// Add hidden layers dynamically (all size 8)
+				for i := 1; i < depth-1; i++ {
+					subLayerSizes[i] = struct{ Width, Height int }{8, 1}
+					if i%2 == 1 {
+						subActivations[i] = "linear" // Alternate linear
+					} else {
+						subActivations[i] = "leaky_relu" // Alternate leaky_relu
+					}
+					subFullyConnected[i] = true
+				}
+
+				// Create and configure fractal network
+				fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+				fractalNet.SetLayerDimension(targetLayer, subLayerSizes, subActivations, subFullyConnected, opts)
+				for y := 0; y < fractalNet.Layers[targetLayer].Height; y++ {
+					for x := 0; x < fractalNet.Layers[targetLayer].Width; x++ {
+						fractalNet.Layers[targetLayer].Neurons[y][x].Dimension.SetLayerDimension(targetLayer, subLayerSizes, subActivations, subFullyConnected, opts)
+					}
+				}
+
+				// Train fractal network
+				fmt.Printf("Training fractal network (layer %d, %d sub-layers)...\n", targetLayer, depth)
+				trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
+				trainerFractal.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+				acc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+				fractalAccs[targetLayer-1][depth-minDepth] = acc
+				fmt.Printf("Fractal accuracy (layer %d, %d sub-layers): %.2f%%\n", targetLayer, depth, acc*100)
+			}
+		}(layer)
+	}
+
+	// Wait for all fractal networks to finish
+	wg.Wait()
+
+	// Write results
+	result := fmt.Sprintf("Experiment 33: Enhanced Deep Hierarchy\nBaseline Accuracy: %.2f%%\n", baselineAcc*100)
+	for layer := 1; layer <= 8; layer++ {
+		for depth := minDepth; depth <= maxDepth; depth++ {
+			acc := fractalAccs[layer-1][depth-minDepth]
+			result += fmt.Sprintf("Fractal Accuracy (layer %d, %d sub-layers): %.2f%%\n", layer, depth, acc*100)
+		}
+	}
+	result += "\n"
+	if _, err := file.WriteString(result); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+}
+
+func experimentEnhancedDeepHierarchy_1(file *os.File) {
+	fmt.Println("\n=== Experiment 33: Enhanced Deep Hierarchy ===")
+
+	// 10-layer outer network
+	layerSizes := []struct{ Width, Height int }{{32, 1}, {64, 1}, {64, 1}, {64, 1}, {32, 1}, {32, 1}, {16, 1}, {16, 1}, {8, 1}, {2, 1}}
+	activations := []string{"linear", "relu", "relu", "relu", "relu", "relu", "relu", "relu", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true, true, true, true, true, true, true, true}
+	opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
+
+	// Generate datasets
+	trainInputs, trainTargets := generateEnhancedDeepHierarchy(1000)
+	valInputs, valTargets := generateEnhancedDeepHierarchy(200)
+
+	// Training config
+	trainCfg := paragon.TrainConfig{Epochs: 10, LearningRate: 0.0001, Debug: false}
+
+	// Train baseline
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
+	fmt.Println("Training baseline network...")
+	trainerBaseline.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
+	fmt.Printf("Baseline accuracy: %.2f%%\n", baselineAcc*100)
+
+	// Test layers 5 and 7 with 4 and 5 sub-layers, 3 trials each
+	layers := []int{5, 7}
+	depths := []int{4, 5}
+	numTrials := 3
+	fractalAccs := make([][][]float64, len(layers)) // [layer][depth][trial]
+	for i := range fractalAccs {
+		fractalAccs[i] = make([][]float64, len(depths))
+		for j := range fractalAccs[i] {
+			fractalAccs[i][j] = make([]float64, numTrials)
+		}
+	}
+	var wg sync.WaitGroup
+
+	for l, layer := range layers {
+		for d, depth := range depths {
+			for trial := 0; trial < numTrials; trial++ {
+				wg.Add(1)
+				go func(targetLayer, subDepth, trialNum int) {
+					defer wg.Done()
+
+					// Build sub-network
+					subLayerSizes := make([]struct{ Width, Height int }, subDepth)
+					subActivations := make([]string, subDepth)
+					subFullyConnected := make([]bool, subDepth)
+					subLayerSizes[0] = struct{ Width, Height int }{1, 1}
+					subLayerSizes[subDepth-1] = struct{ Width, Height int }{1, 1}
+					subActivations[0] = "leaky_relu"
+					subActivations[subDepth-1] = "relu"
+					subFullyConnected[0] = true
+					subFullyConnected[subDepth-1] = true
+					for i := 1; i < subDepth-1; i++ {
+						subLayerSizes[i] = struct{ Width, Height int }{8, 1}
+						if i%2 == 1 {
+							subActivations[i] = "linear"
+						} else {
+							subActivations[i] = "leaky_relu"
+						}
+						subFullyConnected[i] = true
+					}
+
+					// Configure fractal network
+					fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+					fractalNet.SetLayerDimension(targetLayer, subLayerSizes, subActivations, subFullyConnected, opts)
+					for y := 0; y < fractalNet.Layers[targetLayer].Height; y++ {
+						for x := 0; x < fractalNet.Layers[targetLayer].Width; x++ {
+							fractalNet.Layers[targetLayer].Neurons[y][x].Dimension.SetLayerDimension(targetLayer, subLayerSizes, subActivations, subFullyConnected, opts)
+						}
+					}
+
+					// Train
+					fmt.Printf("Training fractal network (layer %d, %d sub-layers, trial %d)...\n", targetLayer, subDepth, trialNum+1)
+					trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
+					trainerFractal.TrainSimple(trainInputs, trainTargets, trainCfg.Epochs)
+					acc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+					fractalAccs[l][d][trialNum] = acc
+					fmt.Printf("Fractal accuracy (layer %d, %d sub-layers, trial %d): %.2f%%\n", targetLayer, subDepth, trialNum+1, acc*100)
+				}(layer, depth, trial)
+			}
+		}
+	}
+
+	// Wait for all to finish
+	wg.Wait()
+
+	// Compute averages and write results
+	result := fmt.Sprintf("Experiment 33: Enhanced Deep Hierarchy\nBaseline Accuracy: %.2f%%\n", baselineAcc*100)
+	for l, layer := range layers {
+		for d, depth := range depths {
+			avg := 0.0
+			for t, acc := range fractalAccs[l][d] {
+				avg += acc
+				result += fmt.Sprintf("Fractal Accuracy (layer %d, %d sub-layers, trial %d): %.2f%%\n", layer, depth, t+1, acc*100)
+			}
+			avg /= float64(numTrials)
+			result += fmt.Sprintf("Fractal Average Accuracy (layer %d, %d sub-layers): %.2f%%\n", layer, depth, avg*100)
+		}
+	}
+	result += "\n"
+	if _, err := file.WriteString(result); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
+}
+
+func experimentEnhancedDeepHierarchy_2(file *os.File) {
+	fmt.Println("\n=== Experiment 33: Enhanced Deep Hierarchy ===")
+
+	// 10-layer outer network
+	layerSizes := []struct{ Width, Height int }{{32, 1}, {64, 1}, {64, 1}, {64, 1}, {32, 1}, {32, 1}, {16, 1}, {16, 1}, {8, 1}, {2, 1}}
+	activations := []string{"linear", "relu", "relu", "relu", "relu", "relu", "relu", "relu", "relu", "softmax"}
+	fullyConnected := []bool{true, true, true, true, true, true, true, true, true, true}
+	opts := paragon.SetLayerDimensionOptions{Shared: false, InitMethod: "xavier"}
+
+	// Generate datasets
+	trainInputs, trainTargets := generateEnhancedDeepHierarchy(1000)
+	valInputs, valTargets := generateEnhancedDeepHierarchy(200)
+
+	// Training config (test both)
+	trainCfgShort := paragon.TrainConfig{Epochs: 10, LearningRate: 0.001, Debug: false}
+	trainCfgLong := paragon.TrainConfig{Epochs: 50, LearningRate: 0.001, Debug: false}
+
+	// Train baseline (short config)
+	baselineNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfgShort}
+	fmt.Println("Training baseline network...")
+	trainerBaseline.TrainSimple(trainInputs, trainTargets, trainCfgShort.Epochs)
+	baselineAcc := paragon.ComputeAccuracy(baselineNet, valInputs, valTargets)
+	fmt.Printf("Baseline accuracy: %.2f%%\n", baselineAcc*100)
+
+	// Fractal: layer 5, 4 sub-layers, 5 trials, test both configs
+	targetLayer := 5
+	subDepth := 4
+	numTrials := 5
+	fractalAccsShort := make([]float64, numTrials)
+	fractalAccsLong := make([]float64, numTrials)
+	var wgShort, wgLong sync.WaitGroup
+
+	// Sub-network setup
+	subLayerSizes := []struct{ Width, Height int }{{1, 1}, {16, 1}, {16, 1}, {1, 1}}
+	subActivations := []string{"leaky_relu", "linear", "leaky_relu", "relu"}
+	subFullyConnected := []bool{true, true, true, true}
+
+	// Short config trials (10 epochs)
+	for trial := 0; trial < numTrials; trial++ {
+		wgShort.Add(1)
+		go func(trialNum int) {
+			defer wgShort.Done()
+			fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+			fractalNet.SetLayerDimension(targetLayer, subLayerSizes, subActivations, subFullyConnected, opts)
+			for y := 0; y < fractalNet.Layers[targetLayer].Height; y++ {
+				for x := 0; x < fractalNet.Layers[targetLayer].Width; x++ {
+					fractalNet.Layers[targetLayer].Neurons[y][x].Dimension.SetLayerDimension(targetLayer, subLayerSizes, subActivations, subFullyConnected, opts)
+				}
+			}
+			fmt.Printf("Training fractal (layer %d, %d sub-layers, trial %d, short)...\n", targetLayer, subDepth, trialNum+1)
+			trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfgShort}
+			trainerFractal.TrainSimple(trainInputs, trainTargets, trainCfgShort.Epochs)
+			acc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+			fractalAccsShort[trialNum] = acc
+			fmt.Printf("Fractal accuracy (layer %d, %d sub-layers, trial %d, short): %.2f%%\n", targetLayer, subDepth, trialNum+1, acc*100)
+		}(trial)
+	}
+
+	// Long config trials (50 epochs)
+	for trial := 0; trial < numTrials; trial++ {
+		wgLong.Add(1)
+		go func(trialNum int) {
+			defer wgLong.Done()
+			fractalNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+			fractalNet.SetLayerDimension(targetLayer, subLayerSizes, subActivations, subFullyConnected, opts)
+			for y := 0; y < fractalNet.Layers[targetLayer].Height; y++ {
+				for x := 0; x < fractalNet.Layers[targetLayer].Width; x++ {
+					fractalNet.Layers[targetLayer].Neurons[y][x].Dimension.SetLayerDimension(targetLayer, subLayerSizes, subActivations, subFullyConnected, opts)
+				}
+			}
+			fmt.Printf("Training fractal (layer %d, %d sub-layers, trial %d, long)...\n", targetLayer, subDepth, trialNum+1)
+			trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfgLong}
+			trainerFractal.TrainSimple(trainInputs, trainTargets, trainCfgLong.Epochs)
+			acc := paragon.ComputeAccuracy(fractalNet, valInputs, valTargets)
+			fractalAccsLong[trialNum] = acc
+			fmt.Printf("Fractal accuracy (layer %d, %d sub-layers, trial %d, long): %.2f%%\n", targetLayer, subDepth, trialNum+1, acc*100)
+		}(trial)
+	}
+
+	// Wait for all
+	wgShort.Wait()
+	wgLong.Wait()
+
+	// Compute averages and write results
+	result := fmt.Sprintf("Experiment 33: Enhanced Deep Hierarchy\nBaseline Accuracy: %.2f%%\n", baselineAcc*100)
+	avgShort := 0.0
+	for t, acc := range fractalAccsShort {
+		avgShort += acc
+		result += fmt.Sprintf("Fractal Accuracy (layer %d, %d sub-layers, trial %d, short): %.2f%%\n", targetLayer, subDepth, t+1, acc*100)
+	}
+	avgShort /= float64(numTrials)
+	result += fmt.Sprintf("Fractal Average Accuracy (layer %d, %d sub-layers, short): %.2f%%\n", targetLayer, subDepth, avgShort*100)
+
+	avgLong := 0.0
+	for t, acc := range fractalAccsLong {
+		avgLong += acc
+		result += fmt.Sprintf("Fractal Accuracy (layer %d, %d sub-layers, trial %d, long): %.2f%%\n", targetLayer, subDepth, t+1, acc*100)
+	}
+	avgLong /= float64(numTrials)
+	result += fmt.Sprintf("Fractal Average Accuracy (layer %d, %d sub-layers, long): %.2f%%\n\n", targetLayer, subDepth, avgLong*100)
+
+	if _, err := file.WriteString(result); err != nil {
+		fmt.Printf("Error writing to file: %v\n", err)
+	}
 }
 
 func generateAdvancedMultiModalFusion(n int) ([][][]float64, [][][]float64) {
