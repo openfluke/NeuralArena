@@ -1,0 +1,13 @@
+Experiment 1 - 2025-03-22 22:08:32
+Baseline Accuracy: 68.50%
+Dimension Accuracy: 89.00%
+Scale: 6.3793
+
+Experiment 2 - 2025-03-22 22:08:32
+Baseline Accuracy: 29.40%
+Single Dimension Accuracy: 24.80%
+Scale: 1.3345
+Multi-Dimension (2 dims) Accuracy: 29.20%
+Multi-Dimension (3 dims) Accuracy: 27.00%
+Multi-Dimension (4 dims) Accuracy: 24.80%
+
