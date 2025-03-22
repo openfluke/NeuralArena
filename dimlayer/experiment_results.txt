@@ -36,3 +36,29 @@ Multi-Dimension (4 dims) Accuracy: 61.00%, Scales: [1.0683424018542154 7.2961080
 Multi-Dimension (5 dims) Accuracy: 56.00%, Scales: [15.749460011772026 9.61762010967472 18.10800867875347 -0.8355025256130292 15.144182270506484]
 
 
+Experiment 6 - 2025-03-23 00:08:09
+Baseline (0D):
+  Accuracy: 99.96%
+  Scale1: 0.0000
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 4m11.004245405s
+1D Network:
+  Accuracy: 97.19%
+  Scale1: -8.1614
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 6m19.619244617s
+2D Network:
+  Accuracy: 96.01%
+  Scale1: -8.5567
+  Scale2: 0.4310
+  Scale3: 0.0000
+  Duration: 14m9.868607003s
+3D Network:
+  Accuracy: 96.75%
+  Scale1: -10.0000
+  Scale2: 0.4241
+  Scale3: -0.2319
+  Duration: 1h0m34.064234983s
+
