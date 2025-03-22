@@ -759,3 +759,21 @@ Experiment 58 Best Candidate Accuracy: 52.70%
 Experiment 59: Baseline Average Accuracy: 66.95% ± 10.35
 Fractal Average Accuracy: 56.00% ± 0.00
 
+
+=== Experiment Run: 2025-03-22 12:12:21 ===
+
+=== Experiment Run: 2025-03-22 12:21:47 ===
+Experiment 61 Best Candidate Loss: 77.1616, Generated Text: thing _is little because london. any difficulty._ jane
+
+=== Experiment Run: 2025-03-22 12:22:33 ===
+Experiment 61 Best Candidate Loss: 78.9810, Generated Text: been faint it._ hugh not london. 156. letters._
+
+=== Experiment Run: 2025-03-22 12:31:11 ===
+Experiment 61 Best Candidate Loss: 207.2327, Generated Text: 
+
+=== Experiment Run: 2025-03-22 12:34:33 ===
+Experiment 61 Best Candidate Loss: 207.2327, Generated Text: 
+
+
+
+=== Experiment Run: 2025-03-22 13:36:42 ===

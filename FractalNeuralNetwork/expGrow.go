@@ -14,8 +14,10 @@ import (
 
 // Candidate holds a network variant along with its validation accuracy.
 type Candidate struct {
-	net *paragon.Network
-	acc float64
+	net       *paragon.Network
+	acc       float64
+	loss      float64
+	adhdScore float64 // Changed from loss to adhdScore
 }
 
 // CloneNetwork creates a deep clone of a network by using gob encoding/decoding.
