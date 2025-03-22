@@ -1,0 +1,182 @@
+Experiment 5 - 2025-03-22 22:43:58
+Baseline (0D):
+  Accuracy: 61.50%
+  Scale1: 0.0000
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 226.699742ms
+1D Network:
+  Accuracy: 43.00%
+  Scale1: 1.6502
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 459.50524ms
+2D Network:
+  Accuracy: 23.50%
+  Scale1: 7.0134
+  Scale2: 1.5501
+  Scale3: 0.0000
+  Duration: 866.178135ms
+3D Network:
+  Accuracy: 10.00%
+  Scale1: 1.0000
+  Scale2: 1.0000
+  Scale3: 1.0000
+  Duration: 1.627386577s
+
+Experiment 5 - 2025-03-22 22:46:34
+Baseline (0D):
+  Accuracy: 63.50%
+  Scale1: 0.0000
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 215.002939ms
+1D Network:
+  Accuracy: 52.50%
+  Scale1: 6.0003
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 462.42968ms
+2D Network:
+  Accuracy: 33.00%
+  Scale1: 3.9824
+  Scale2: 0.8894
+  Scale3: 0.0000
+  Duration: 841.082308ms
+3D Network:
+  Accuracy: 17.50%
+  Scale1: 6.0268
+  Scale2: 1.1312
+  Scale3: 0.4064
+  Duration: 1.44219131s
+
+Experiment 5 - 2025-03-22 22:50:15
+Baseline (0D):
+  Accuracy: 62.50%
+  Scale1: 0.0000
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 229.221859ms
+1D Network:
+  Accuracy: 97.50%
+  Scale1: 5.6931
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 458.236517ms
+2D Network:
+  Accuracy: 34.50%
+  Scale1: 5.5041
+  Scale2: 4.4925
+  Scale3: 0.0000
+  Duration: 941.857938ms
+3D Network:
+  Accuracy: 8.00%
+  Scale1: 1.0000
+  Scale2: 1.0000
+  Scale3: 1.0000
+  Duration: 2.147672771s
+
+Experiment 5 - 2025-03-22 22:53:43
+Baseline (0D):
+  Accuracy: 74.00%
+  Scale1: 0.0000
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 216.623777ms
+1D Network:
+  Accuracy: 52.00%
+  Scale1: 8.9642
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 464.270538ms
+2D Network:
+  Accuracy: 44.00%
+  Scale1: 6.6938
+  Scale2: 1.0528
+  Scale3: 0.0000
+  Duration: 893.312534ms
+3D Network:
+  Accuracy: 21.50%
+  Scale1: 10.0000
+  Scale2: 2.0170
+  Scale3: 1.3887
+  Duration: 1.484317072s
+
+Experiment 5 - 2025-03-22 22:56:40
+Baseline (0D):
+  Accuracy: 54.50%
+  Scale1: 0.0000
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 230.583768ms
+1D Network:
+  Accuracy: 76.50%
+  Scale1: 8.5459
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 487.789066ms
+2D Network:
+  Accuracy: 22.00%
+  Scale1: -0.6754
+  Scale2: -1.0011
+  Scale3: 0.0000
+  Duration: 990.808186ms
+3D Network:
+  Accuracy: 7.00%
+  Scale1: 1.0000
+  Scale2: 1.0000
+  Scale3: 1.0000
+  Duration: 2.142492155s
+
+Experiment 5 - 2025-03-22 22:58:11
+Baseline (0D):
+  Accuracy: 71.00%
+  Scale1: 0.0000
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 239.667654ms
+1D Network:
+  Accuracy: 49.50%
+  Scale1: 4.2446
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 489.047614ms
+2D Network:
+  Accuracy: 34.50%
+  Scale1: 4.6036
+  Scale2: 0.5611
+  Scale3: 0.0000
+  Duration: 939.548417ms
+3D Network:
+  Accuracy: 17.50%
+  Scale1: 2.7151
+  Scale2: 1.2565
+  Scale3: 1.0147
+  Duration: 1.533033785s
+
+Experiment 5 - 2025-03-22 22:59:17
+Baseline (0D):
+  Accuracy: 65.00%
+  Scale1: 0.0000
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 244.418796ms
+1D Network:
+  Accuracy: 45.00%
+  Scale1: 5.3712
+  Scale2: 0.0000
+  Scale3: 0.0000
+  Duration: 511.943761ms
+2D Network:
+  Accuracy: 68.50%
+  Scale1: 6.3074
+  Scale2: 0.5417
+  Scale3: 0.0000
+  Duration: 1.008226747s
+3D Network:
+  Accuracy: 13.00%
+  Scale1: 1.0000
+  Scale2: 1.0000
+  Scale3: 1.0000
+  Duration: 2.383667327s
+

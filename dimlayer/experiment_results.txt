@@ -11,3 +11,28 @@ Multi-Dimension (2 dims) Accuracy: 29.20%
 Multi-Dimension (3 dims) Accuracy: 27.00%
 Multi-Dimension (4 dims) Accuracy: 24.80%
 
+Experiment 3 - 2025-03-22 22:18:59
+Baseline Accuracy: 31.00%
+Multi-Dimension (1 dims) Accuracy: 24.40%, Scales: [0.5]
+Multi-Dimension (2 dims) Accuracy: 24.60%, Scales: [1 1.1]
+Multi-Dimension (3 dims) Accuracy: 23.00%, Scales: [0.5 0.6 0.7]
+Multi-Dimension (4 dims) Accuracy: 24.40%, Scales: [0.8 0.9 1 1.1]
+Multi-Dimension (5 dims) Accuracy: 23.40%, Scales: [1 1.1 1.2 1.3 1.4]
+
+Experiment 3 - 2025-03-22 22:22:06
+Baseline Accuracy: 28.20%
+Multi-Dimension (1 dims) Accuracy: 23.00%, Scales: [7.045711670135512]
+Multi-Dimension (2 dims) Accuracy: 29.20%, Scales: [5.786027081928104 6.187190507784788]
+Multi-Dimension (3 dims) Accuracy: 22.80%, Scales: [3.011593508182353 8.773260973310702 3.1755269641540376]
+Multi-Dimension (4 dims) Accuracy: 27.60%, Scales: [3.3808027642677088 3.280823756889804 6.081432801826034 9.93938184921312]
+Multi-Dimension (5 dims) Accuracy: 30.00%, Scales: [2.7344620249172977 4.499482112527296 4.362005511762503 7.55190451298626 3.218756602777952]
+
+Experiment 3 - 2025-03-22 22:25:42
+Baseline Accuracy: 74.40%
+Multi-Dimension (1 dims) Accuracy: 56.60%, Scales: [4.68431537202315]
+Multi-Dimension (2 dims) Accuracy: 62.40%, Scales: [1.3022638592028986 0.1925016389127819]
+Multi-Dimension (3 dims) Accuracy: 62.00%, Scales: [4.104810928903398 1.154134745831257 6.156130144644532]
+Multi-Dimension (4 dims) Accuracy: 61.00%, Scales: [1.0683424018542154 7.296108027507606 -2.5297653790996195 -0.9941579621893177]
+Multi-Dimension (5 dims) Accuracy: 56.00%, Scales: [15.749460011772026 9.61762010967472 18.10800867875347 -0.8355025256130292 15.144182270506484]
+
+
