@@ -96,10 +96,10 @@ func Experiment58(file *os.File) {
 	valInputs, valTargets := generateHierarchicalXOR(2000)
 
 	// Evolution parameters.
-	generations := 5
-	mutationsPerCandidate := 40 // number of mutants per candidate
-	topSelection := 10          // keep top 10 candidates each generation
-	maxDepth := 10
+	generations := 3
+	mutationsPerCandidate := 2 // number of mutants per candidate
+	topSelection := 10         // keep top 10 candidates each generation
+	maxDepth := 2
 	// Start with a single basic candidate.
 	initialNet := paragon.NewNetwork(layerSizes, activations, fullyConnected)
 	trainer := paragon.Trainer{Network: initialNet, Config: paragon.TrainConfig{Epochs: 5, LearningRate: 0.002}}

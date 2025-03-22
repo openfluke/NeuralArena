@@ -777,3 +777,148 @@ Experiment 61 Best Candidate Loss: 207.2327, Generated Text:
 
 
 === Experiment Run: 2025-03-22 13:36:42 ===
+Experiment 61 Best Candidate ADHD Score: 96.2521, Generated Text: j.
+
+=== Experiment Run: 2025-03-22 19:53:16 ===
+Experiment 58 Best Candidate Accuracy: 52.90%
+
+=== Experiment Run: 2025-03-22 19:55:01 ===
+Experiment 58 Best Candidate Accuracy: 50.95%
+
+=== Experiment Run: 2025-03-22 19:55:36 ===
+Experiment 58 Best Candidate Accuracy: 50.95%
+
+=== Experiment Run: 2025-03-22 19:55:47 ===
+Experiment 58 Best Candidate Accuracy: 52.05%
+
+=== Experiment Run: 2025-03-22 19:56:53 ===
+Experiment 58 Best Candidate Accuracy: 51.75%
+
+=== Experiment Run: 2025-03-22 19:56:58 ===
+Experiment 58 Best Candidate Accuracy: 51.40%
+
+=== Experiment Run: 2025-03-22 19:57:40 ===
+Experiment 58 Best Candidate Accuracy: 52.40%
+
+=== Experiment Run: 2025-03-22 20:03:59 ===
+
+=== Experiment Run: 2025-03-22 20:06:44 ===
+
+=== Experiment Run: 2025-03-22 20:07:11 ===
+Experiment 62 Best Candidate Accuracy: 53.50%, ADHD Score: 49.90
+
+=== Experiment Run: 2025-03-22 20:07:50 ===
+
+=== Experiment Run: 2025-03-22 20:08:40 ===
+
+=== Experiment Run: 2025-03-22 20:11:29 ===
+Experiment 62 Best Candidate Accuracy: 53.00%, ADHD Score: 46.90
+
+=== Experiment Run: 2025-03-22 20:13:01 ===
+Experiment 62 Best Candidate Accuracy: 58.00%, ADHD Score: 51.10
+
+=== Experiment Run: 2025-03-22 20:13:22 ===
+Experiment 62 Best Candidate Accuracy: 54.00%, ADHD Score: 48.10
+
+=== Experiment Run: 2025-03-22 20:13:32 ===
+Experiment 62 Best Candidate Accuracy: 53.50%, ADHD Score: 51.10
+
+=== Experiment Run: 2025-03-22 20:15:13 ===
+Experiment 62 Best Candidate Accuracy: 56.00%, ADHD Score: 51.90
+
+=== Experiment Run: 2025-03-22 20:15:27 ===
+Experiment 62 Best Candidate Accuracy: 54.00%, ADHD Score: 50.70
+
+=== Experiment Run: 2025-03-22 20:15:38 ===
+Experiment 62 Best Candidate Accuracy: 56.00%, ADHD Score: 47.60
+
+=== Experiment Run: 2025-03-22 20:16:40 ===
+Experiment 62 Best Candidate Accuracy: 54.00%, ADHD Score: 49.80
+
+=== Experiment Run: 2025-03-22 20:17:35 ===
+
+=== Experiment Run: 2025-03-22 20:17:40 ===
+Experiment 62 Best Candidate Accuracy: 54.50%, ADHD Score: 49.80
+
+=== Experiment Run: 2025-03-22 20:19:33 ===
+Experiment 62 Best Candidate Accuracy: 55.50%, ADHD Score: 48.80
+
+=== Experiment Run: 2025-03-22 20:24:39 ===
+Experiment 62 Best Candidate Accuracy: 58.50%, ADHD Score: 48.10
+
+=== Experiment Run: 2025-03-22 20:25:06 ===
+Experiment 62 Best Candidate Accuracy: 55.00%, ADHD Score: 49.30
+
+=== Experiment Run: 2025-03-22 20:26:22 ===
+Experiment 62 Best Candidate Accuracy: 60.00%, ADHD Score: 50.30
+
+=== Experiment Run: 2025-03-22 20:26:35 ===
+Experiment 62 Best Candidate Accuracy: 54.50%, ADHD Score: 49.80
+
+=== Experiment Run: 2025-03-22 20:26:43 ===
+Experiment 62 Best Candidate Accuracy: 58.00%, ADHD Score: 53.00
+
+=== Experiment Run: 2025-03-22 20:27:36 ===
+Experiment 62 Best Candidate Accuracy: 58.50%, ADHD Score: 50.80
+
+=== Experiment Run: 2025-03-22 20:29:36 ===
+Experiment 62 Best Candidate Accuracy: 53.50%, ADHD Score: 50.50
+
+=== Experiment Run: 2025-03-22 20:29:45 ===
+Experiment 62 Best Candidate Accuracy: 60.50%, ADHD Score: 3.00
+
+=== Experiment Run: 2025-03-22 20:30:06 ===
+Experiment 62 Best Candidate Accuracy: 56.00%, ADHD Score: 51.00
+
+=== Experiment Run: 2025-03-22 20:30:45 ===
+Experiment 62 Best Candidate Accuracy: 51.00%, ADHD Score: 47.50
+
+=== Experiment Run: 2025-03-22 20:31:15 ===
+Experiment 62 Best Candidate Accuracy: 51.50%, ADHD Score: 50.70
+
+=== Experiment Run: 2025-03-22 20:31:26 ===
+Experiment 62 Best Candidate Accuracy: 53.00%, ADHD Score: 51.20
+
+=== Experiment Run: 2025-03-22 20:31:44 ===
+Experiment 62 Best Candidate Accuracy: 55.00%, ADHD Score: 51.20
+
+=== Experiment Run: 2025-03-22 20:31:56 ===
+Experiment 62 Best Candidate Accuracy: 55.50%, ADHD Score: 51.20
+
+=== Experiment Run: 2025-03-22 20:32:08 ===
+Experiment 62 Best Candidate Accuracy: 56.00%, ADHD Score: 51.30
+
+=== Experiment Run: 2025-03-22 20:32:56 ===
+Experiment 62 Best Candidate Accuracy: 55.00%, ADHD Score: 50.70
+
+=== Experiment Run: 2025-03-22 20:33:00 ===
+Experiment 62 Best Candidate Accuracy: 56.50%, ADHD Score: 45.50
+
+=== Experiment Run: 2025-03-22 20:33:05 ===
+Experiment 62 Best Candidate Accuracy: 56.50%, ADHD Score: 51.00
+
+=== Experiment Run: 2025-03-22 20:33:13 ===
+Experiment 62 Best Candidate Accuracy: 53.50%, ADHD Score: 49.10
+
+=== Experiment Run: 2025-03-22 20:33:22 ===
+
+=== Experiment Run: 2025-03-22 20:33:45 ===
+
+=== Experiment Run: 2025-03-22 20:34:33 ===
+Experiment 62 Best Candidate Accuracy: 53.50%, ADHD Score: 51.40
+
+=== Experiment Run: 2025-03-22 20:34:43 ===
+Experiment 62 Best Candidate Accuracy: 57.00%, ADHD Score: 49.90
+
+=== Experiment Run: 2025-03-22 20:34:53 ===
+Experiment 62 Best Candidate Accuracy: 54.50%, ADHD Score: 49.30
+
+=== Experiment Run: 2025-03-22 20:35:30 ===
+Experiment 62 Best Candidate Accuracy: 60.00%, ADHD Score: 34.00
+
+=== Experiment Run: 2025-03-22 20:35:45 ===
+Experiment 62 Best Candidate Accuracy: 56.50%, ADHD Score: 50.50
+
+=== Experiment Run: 2025-03-22 20:50:53 ===
+
+=== Experiment Run: 2025-03-22 20:52:03 ===
