@@ -131,7 +131,7 @@ func main() {
 	dataURL := "https://raw.githubusercontent.com/datasets/finance-vix/main/data/vix-daily.csv"
 	seqLength := 30
 	epochs := 50
-	learningRate := 0.001
+	//learningRate := 0.001
 
 	// Remove any stale AAPL.csv to avoid confusion
 	os.Remove("AAPL.csv")
@@ -186,7 +186,26 @@ func main() {
 	fullyConnected := []bool{true, true, true}
 	nn := paragon.NewNetwork(layerSizes, activations, fullyConnected)
 
-	fmt.Println("Starting training with Backward...")
+	// Create sub-network
+	// Create sub-network
+	subLayerSizes := []struct{ Width, Height int }{
+		{128, 1}, // Input: 128x1 (matches hidden layer)
+		{128, 1}, // Hidden layer 1: 64x1
+		{128, 1}, // Hidden layer 2: 64x1
+		{128, 1}, // Output: 128x1
+	}
+	subActivations := []string{"relu", "relu", "relu", "relu"}
+	subFullyConnected := []bool{true, true, true, true}
+	subNetwork := paragon.NewNetwork(subLayerSizes, subActivations, subFullyConnected)
+	nn.SetLayerDimension(1, subNetwork)
+
+	nn.Train(trainInputs, targets, epochs, 0.0001)
+	trainAcc := computeAccuracy(nn, trainInputs, trainTargets)
+	testAcc := computeAccuracy(nn, testInputs, testTargets)
+	fmt.Printf("Train Acc: %.2f%%, Test Acc: %.2f%%\n",
+		trainAcc*100, testAcc*100)
+
+	/*fmt.Println("Starting training with Backward...")
 	for epoch := 0; epoch < epochs; epoch++ {
 		totalLoss := 0.0
 		perm := rand.Perm(len(trainInputs))
@@ -207,7 +226,7 @@ func main() {
 			fmt.Printf("Epoch %d, Loss: %.4f, Train Acc: %.2f%%, Test Acc: %.2f%%\n",
 				epoch, avgLoss, trainAcc*100, testAcc*100)
 		}
-	}
+	}*/
 
 	predictFuture(nn, stockData, seqLength, 7, "week")
 	predictFuture(nn, stockData, seqLength, 90, "quarter")
