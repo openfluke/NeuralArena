@@ -2,3 +2,5 @@ data
 *.csv
 *.json
 *.gob
+mnist_data
+*.gz

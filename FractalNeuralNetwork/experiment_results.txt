@@ -925,3 +925,324 @@ Experiment 62 Best Candidate Accuracy: 56.50%, ADHD Score: 50.50
 
 === Experiment Run: 2025-03-22 20:53:53 ===
 Experiment 63 Best Candidate Accuracy: 50.00%, ADHD Score: 51.20
+
+=== Experiment Run: 2025-03-24 17:55:24 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 50.50%
+Fractal Accuracy: 48.00%
+
+
+=== Experiment Run: 2025-03-24 18:00:58 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 48.50%
+Fractal Accuracy: 57.50%
+
+
+=== Experiment Run: 2025-03-24 18:01:12 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 50.00%
+Fractal Accuracy: 49.00%
+
+
+=== Experiment Run: 2025-03-24 18:01:23 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 51.00%
+Fractal Accuracy: 47.50%
+
+
+=== Experiment Run: 2025-03-24 18:01:28 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 54.50%
+Fractal Accuracy: 52.50%
+
+
+=== Experiment Run: 2025-03-24 18:01:39 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 54.00%
+Fractal Accuracy: 54.00%
+
+
+=== Experiment Run: 2025-03-24 18:01:44 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 53.00%
+Fractal Accuracy: 49.00%
+
+-----------------------------------------------------
+
+
+=== Experiment Run: 2025-03-24 18:14:47 ===
+Experiment 1: Baseline vs Fractal
+Baseline Accuracy: 54.00%
+Fractal Accuracy: 49.00%
+
+Experiment 2: Fractal Pretraining
+Baseline Accuracy: 49.00%
+Pretrained Fractal Accuracy: 56.50%
+
+Experiment 3: Multi-Dimensional (3 Levels)
+Accuracy: 100.00%
+
+Experiment 4: Hierarchical XOR
+Baseline Accuracy: 58.50%
+Fractal Accuracy: 50.00%
+
+Experiment 5: Multi-Scale Patterns
+Baseline Accuracy: 100.00%
+Fractal Accuracy: 100.00%
+
+Experiment 6: Temporal Dependencies
+Baseline Accuracy: 99.50%
+Fractal Accuracy: 98.00%
+
+Experiment 7: Sparse Feature Detection
+Baseline Accuracy: 92.00%
+Fractal Accuracy: 91.00%
+
+Experiment 8: Non-Linear Composition
+Baseline Accuracy: 96.50%
+Fractal Accuracy: 93.00%
+
+Experiment 9: Deep Hierarchy
+Baseline Accuracy: 52.50%
+Fractal Accuracy: 92.50%
+
+Experiment 10: Polynomial Expansion
+Baseline Accuracy: 95.00%
+Fractal Accuracy: 96.00%
+
+Experiment 11: Multi-Modal Fusion
+Baseline Accuracy: 99.00%
+Fractal Accuracy: 99.50%
+
+Experiment 12: Recursive Patterns
+Baseline Accuracy: 98.00%
+Fractal Accuracy: 98.50%
+
+Experiment 13: Contextual Ambiguity
+Baseline Accuracy: 51.00%
+Fractal Accuracy: 54.00%
+
+Experiment 14: Nested XOR
+Baseline Accuracy: 47.50%
+Fractal Accuracy: 51.00%
+
+
+
+
+=== Experiment Run: 2025-03-24 18:48:45 ===
+Task: Hierarchical Pattern Recognition
+Baseline Accuracy: 96.50%
+Fractal Accuracy: 96.50%
+
+Task: Recursive Function Approximation
+Baseline Accuracy: 100.00%
+Fractal Accuracy: 100.00%
+
+Task: High-Dimensional Classification
+Baseline Accuracy: 90.50%
+Fractal Accuracy: 91.00%
+
+Task: Time Series Prediction
+Baseline Accuracy: 100.00%
+Fractal Accuracy: 100.00%
+
+Task: Simple Classification
+Baseline Accuracy: 93.00%
+Fractal Accuracy: 98.00%
+
+
+=== Experiment Run: 2025-03-24 18:49:25 ===
+Task: Hierarchical Pattern Recognition
+Baseline Accuracy: 97.00%
+Fractal Accuracy: 97.00%
+
+Task: Recursive Function Approximation
+Baseline Accuracy: 96.00%
+Fractal Accuracy: 99.50%
+
+Task: High-Dimensional Classification
+Baseline Accuracy: 82.00%
+Fractal Accuracy: 86.50%
+
+Task: Time Series Prediction
+Baseline Accuracy: 100.00%
+Fractal Accuracy: 100.00%
+
+Task: Simple Classification
+Baseline Accuracy: 76.50%
+Fractal Accuracy: 81.00%
+
+
+=== Experiment Run: 2025-03-24 18:50:49 ===
+Task: Hierarchical Pattern Recognition
+Baseline Accuracy: 95.50%
+Fractal Accuracy: 95.50%
+
+Task: Recursive Function Approximation
+Baseline Accuracy: 75.50%
+Fractal Accuracy: 85.00%
+
+Task: High-Dimensional Classification
+Baseline Accuracy: 69.50%
+Fractal Accuracy: 62.50%
+
+Task: Time Series Prediction
+Baseline Accuracy: 100.00%
+Fractal Accuracy: 100.00%
+
+Task: Simple Classification
+Baseline Accuracy: 53.00%
+Fractal Accuracy: 53.00%
+
+
+=== Experiment Run: 2025-03-24 18:57:08 ===
+
+=== Experiment Run: 2025-03-24 19:00:12 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:01:17 ===
+
+=== Experiment Run: 2025-03-24 19:01:54 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:03:47 ===
+
+=== Experiment Run: 2025-03-24 19:04:06 ===
+
+=== Experiment Run: 2025-03-24 19:04:24 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 10.00%
+
+
+=== Experiment Run: 2025-03-24 19:05:12 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 10.00%
+
+
+=== Experiment Run: 2025-03-24 19:06:05 ===
+
+=== Experiment Run: 2025-03-24 19:11:22 ===
+
+=== Experiment Run: 2025-03-24 19:13:15 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 0.00%
+Fractal Accuracy: 15.00%
+
+
+=== Experiment Run: 2025-03-24 19:13:33 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:14:04 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 15.00%
+
+
+=== Experiment Run: 2025-03-24 19:14:37 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 5.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:15:06 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 15.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:15:32 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 20.00%
+
+
+=== Experiment Run: 2025-03-24 19:16:05 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 5.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:16:16 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 15.00%
+Fractal Accuracy: 10.00%
+
+
+=== Experiment Run: 2025-03-24 19:19:41 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 15.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:21:57 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 15.00%
+Fractal Accuracy: 15.00%
+
+
+=== Experiment Run: 2025-03-24 19:27:07 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 5.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:27:27 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 10.00%
+
+
+=== Experiment Run: 2025-03-24 19:32:24 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 15.00%
+
+
+=== Experiment Run: 2025-03-24 19:33:13 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 0.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:36:47 ===
+
+=== Experiment Run: 2025-03-24 19:37:29 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 5.00%
+Fractal Accuracy: 5.00%
+
+
+=== Experiment Run: 2025-03-24 19:37:40 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 25.00%
+
+
+=== Experiment Run: 2025-03-24 19:38:02 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 25.00%
+
+
+=== Experiment Run: 2025-03-24 19:38:24 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 5.00%
+Fractal Accuracy: 10.00%
+
+
+=== Experiment Run: 2025-03-24 19:39:07 ===
+Experiment 65: CIFAR-10 Classification
+Baseline Accuracy: 10.00%
+Fractal Accuracy: 5.00%
+

@@ -30,44 +30,44 @@ func main() {
 	}
 
 	// Run experiments and append results
-	//experimentBaselineVsFractal(file)
-	//experimentFractalPretraining(file)
-	//experimentMultiDimensional(file)
+	/*experimentBaselineVsFractal(file)
+	experimentFractalPretraining(file)
+	experimentMultiDimensional(file)
 
 	// New experiments
-	//experimentHierarchicalXOR(file)
-	//experimentMultiScalePatterns(file)
-	//experimentTemporalDependencies(file)
-	//experimentSparseFeatureDetection(file)
-	//experimentNonLinearComposition(file)
+	experimentHierarchicalXOR(file)
+	experimentMultiScalePatterns(file)
+	experimentTemporalDependencies(file)
+	experimentSparseFeatureDetection(file)
+	experimentNonLinearComposition(file)
 
 	// New experiments
-	//experimentDeepHierarchy(file)
-	//experimentPolynomialExpansion(file)
-	//experimentMultiModalFusion(file)
-	//experimentRecursivePatterns(file)
-	//experimentContextualAmbiguity(file)
+	experimentDeepHierarchy(file)
+	experimentPolynomialExpansion(file)
+	experimentMultiModalFusion(file)
+	experimentRecursivePatterns(file)
+	experimentContextualAmbiguity(file)
 
 	// New experiments with deeper fractal structures
-	//experimentNestedXOR(file)
-	//experimentPatternHierarchy(file)
-	//experimentDynamicScaling(file)
-	//experimentFeatureComposition(file)
-	//experimentLongRangeContext(file)
-	//experimentDeepNestedXOR(file)
+	experimentNestedXOR(file)
+	experimentPatternHierarchy(file)
+	experimentDynamicScaling(file)
+	experimentFeatureComposition(file)
+	experimentLongRangeContext(file)
+	experimentDeepNestedXOR(file)
 
 	// New experiments
-	//experimentRecursiveFunction(file)
-	//experimentMultiLevelNoise(file)
-	//experimentHierarchicalRules(file)
-	//experimentFractalPatternCompletion(file)
+	experimentRecursiveFunction(file)
+	experimentMultiLevelNoise(file)
+	experimentHierarchicalRules(file)
+	experimentFractalPatternCompletion(file)
 
 	// New complex experiments
-	//experimentDeepFractalXOR(file)
-	//experimentNestedPolynomialChaos(file)
-	//experimentMultiScaleTemporalFractals(file)
-	//experimentRecursiveContextualSwitching(file)
-	//experimentFractalNoiseInterpolation(file)
+	experimentDeepFractalXOR(file)
+	experimentNestedPolynomialChaos(file)
+	experimentMultiScaleTemporalFractals(file)
+	experimentRecursiveContextualSwitching(file)
+	experimentFractalNoiseInterpolation(file)*/
 
 	// Add the new experiment
 	//experimentHierarchicalBinary(file)
@@ -105,7 +105,9 @@ func main() {
 	//Experiment61(file)
 
 	//Experiment62(file)
-	Experiment63(file)
+	//Experiment63(file)
+	//experiment64(file)
+	experiment65(file)
 }
 
 // Experiment 1: Baseline vs Fractal Network
@@ -984,7 +986,7 @@ func experimentNestedXOR(file *os.File) {
 	trainInputs, trainTargets := generateNestedXOR(1000)
 	valInputs, valTargets := generateNestedXOR(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1029,7 +1031,7 @@ func experimentPatternHierarchy(file *os.File) {
 	trainInputs, trainTargets := generatePatternHierarchy(1000)
 	valInputs, valTargets := generatePatternHierarchy(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1074,7 +1076,7 @@ func experimentDynamicScaling(file *os.File) {
 	trainInputs, trainTargets := generateDynamicScaling(1000)
 	valInputs, valTargets := generateDynamicScaling(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1119,7 +1121,7 @@ func experimentFeatureComposition(file *os.File) {
 	trainInputs, trainTargets := generateFeatureComposition(1000)
 	valInputs, valTargets := generateFeatureComposition(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1164,7 +1166,7 @@ func experimentLongRangeContext(file *os.File) {
 	trainInputs, trainTargets := generateLongRangeContext(1000)
 	valInputs, valTargets := generateLongRangeContext(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1497,7 +1499,7 @@ func experimentFractalSymmetry(file *os.File) {
 	trainInputs, trainTargets := generateFractalSymmetry(1000)
 	valInputs, valTargets := generateFractalSymmetry(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1564,7 +1566,7 @@ func experimentRecursiveFunction(file *os.File) {
 	trainInputs, trainTargets := generateRecursiveFunction(1000)
 	valInputs, valTargets := generateRecursiveFunction(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1634,7 +1636,7 @@ func experimentMultiLevelNoise(file *os.File) {
 	trainInputs, trainTargets := generateMultiLevelNoise(1000)
 	valInputs, valTargets := generateMultiLevelNoise(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1703,7 +1705,7 @@ func experimentHierarchicalRules(file *os.File) {
 	trainInputs, trainTargets := generateHierarchicalRules(1000)
 	valInputs, valTargets := generateHierarchicalRules(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -1775,7 +1777,7 @@ func experimentFractalPatternCompletion(file *os.File) {
 	trainInputs, trainTargets := generateFractalPatternCompletion(1000)
 	valInputs, valTargets := generateFractalPatternCompletion(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.0005}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.0005}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
@@ -2944,7 +2946,7 @@ func experimentExtendedLongRangeContext(file *os.File) {
 	trainInputs, trainTargets := generateExtendedLongRangeContext(1000)
 	valInputs, valTargets := generateExtendedLongRangeContext(200)
 
-	trainCfg := paragon.TrainConfig{Epochs: 1000, LearningRate: 0.001}
+	trainCfg := paragon.TrainConfig{Epochs: 100, LearningRate: 0.001}
 
 	trainerBaseline := paragon.Trainer{Network: baselineNet, Config: trainCfg}
 	trainerFractal := paragon.Trainer{Network: fractalNet, Config: trainCfg}
