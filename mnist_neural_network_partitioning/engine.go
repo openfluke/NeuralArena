@@ -25,34 +25,41 @@ func main() {
 	trainIn, trainT, valIn, valT := paragon.SplitDataset(trainIn, trainT, 0.8)
 	fmt.Printf("Data samples → Train:%d, Val:%d, Test:%d\n", len(trainIn), len(valIn), len(testIn))
 
-	// 2. Build a network partitioned by tags (even=0, odd=1)
-	layerSizes := []struct{ Width, Height int }{
-		{28, 28}, // Input layer: 28x28
-		{16, 16}, // Hidden layer: 16x16 (split into two regions)
-		{10, 1},  // Output layer: 10x1 (shared, 10 classes)
+	staticParitition := true
+	if staticParitition {
+		// 2. Build a network partitioned by tags (even=0, odd=1)
+		layerSizes := []struct{ Width, Height int }{
+			{28, 28}, // Input layer: 28x28
+			{16, 16}, // Hidden layer: 16x16 (split into two regions)
+			{10, 1},  // Output layer: 10x1 (shared, 10 classes)
+		}
+		activations := []string{"leaky_relu", "leaky_relu", "softmax"}
+		fullyConnected := []bool{true, false, true}
+
+		net := paragon.NewNetwork(layerSizes, activations, fullyConnected)
+
+		// 3. Train the network with two passes per epoch
+		const epochs = 10
+		const lr = 0.01
+		const totalTags = 2
+
+		for e := 0; e < epochs; e++ {
+			// Train on even digits (tag 0)
+			trainSingleTag(net, trainIn, trainT, 0, totalTags, lr)
+			// Train on odd digits (tag 1)
+			trainSingleTag(net, trainIn, trainT, 1, totalTags, lr)
+			fmt.Printf("Completed epoch %d/%d\n", e+1, epochs)
+		}
+
+		// 4. Evaluate on train, validation, and test sets
+		fmt.Println("\n=== Final Combined Evaluation (Tag Partition) ===")
+		fmt.Printf("Train Accuracy: %.2f%%\n", evalPartition(net, trainIn, trainT, totalTags)*100)
+		fmt.Printf("Val   Accuracy: %.2f%%\n", evalPartition(net, valIn, valT, totalTags)*100)
+		fmt.Printf("Test  Accuracy: %.2f%%\n", evalPartition(net, testIn, testT, totalTags)*100)
+	} else {
+		fmt.Println("tried so many things and nothing meeting requirements")
 	}
-	activations := []string{"leaky_relu", "leaky_relu", "softmax"}
-	fullyConnected := []bool{true, false, true}
 
-	net := paragon.NewNetwork(layerSizes, activations, fullyConnected)
-
-	// 3. Train the network with two passes per epoch
-	const epochs = 10
-	const lr = 0.01
-	const totalTags = 2
-	for e := 0; e < epochs; e++ {
-		// Train on even digits (tag 0)
-		trainSingleTag(net, trainIn, trainT, 0, totalTags, lr)
-		// Train on odd digits (tag 1)
-		trainSingleTag(net, trainIn, trainT, 1, totalTags, lr)
-		fmt.Printf("Completed epoch %d/%d\n", e+1, epochs)
-	}
-
-	// 4. Evaluate on train, validation, and test sets
-	fmt.Println("\n=== Final Combined Evaluation (Tag Partition) ===")
-	fmt.Printf("Train Accuracy: %.2f%%\n", evalPartition(net, trainIn, trainT, totalTags)*100)
-	fmt.Printf("Val   Accuracy: %.2f%%\n", evalPartition(net, valIn, valT, totalTags)*100)
-	fmt.Printf("Test  Accuracy: %.2f%%\n", evalPartition(net, testIn, testT, totalTags)*100)
 }
 
 // trainSingleTag trains the network on samples matching the desired tag's parity
