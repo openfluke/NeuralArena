@@ -1,0 +1,7 @@
+[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_head,[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_body,hinge,limit_lower:0,limit_upper:0,motor_enable:1,motor_max_impulse:1000,motor_target_velocity:0
+[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_body,[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_left_arm,hinge,limit_lower:0,limit_upper:0,motor_enable:1,motor_max_impulse:1000,motor_target_velocity:0
+[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_left_arm,[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_left_leg,hinge,limit_lower:0,limit_upper:0,motor_enable:1,motor_max_impulse:1000,motor_target_velocity:0
+[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_left_leg,[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_left_foot,hinge,limit_lower:0,limit_upper:0,motor_enable:1,motor_max_impulse:1000,motor_target_velocity:0
+[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_body,[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_right_arm,hinge,limit_lower:0,limit_upper:0,motor_enable:1,motor_max_impulse:1000,motor_target_velocity:0
+[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_right_arm,[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_right_leg,hinge,limit_lower:0,limit_upper:0,motor_enable:1,motor_max_impulse:1000,motor_target_velocity:0
+[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_right_leg,[ARC]-OC-gen1-v0-POD_192.168.0.227_10023_right_foot,hinge,limit_lower:0,limit_upper:0,motor_enable:1,motor_max_impulse:1000,motor_target_velocity:0
