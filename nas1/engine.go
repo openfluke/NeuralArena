@@ -43,7 +43,7 @@ func basic(lstTmpData [][]string) {
 	fmt.Println("Expected output Padded row:", lstDataExpectedOutputPadding[0])
 
 	lstDataSelected := paragon.SelectColumns(lstData, []int{0})
-	lstDataInputPadding := paragon.Padding(lstDataSelected, 96, 0.0)
+	lstDataInputPadding := paragon.Padding(lstDataSelected, 99, 0.0)
 
 	fmt.Println("input without padding row:", lstDataSelected[0])
 	fmt.Println("Expected intput Padded row:", lstDataInputPadding[0])
@@ -52,7 +52,7 @@ func basic(lstTmpData [][]string) {
 	fmt.Println("Convert to 3D slices inputs3D")
 	inputs3D := make([][][]float64, len(lstDataInputPadding))
 	for i, row := range lstDataInputPadding {
-		inputs3D[i] = [][]float64{row} // [1][96]
+		inputs3D[i] = [][]float64{row} // [1][99]
 		fmt.Println(inputs3D[i])
 	}
 
@@ -64,15 +64,16 @@ func basic(lstTmpData [][]string) {
 	}
 
 	layerSizes := []struct{ Width, Height int }{
-		{96, 1}, // Input layer (8 cubes × 12 features)
-		{10, 1}, // Hidden
+		{99, 1}, // Input layer (8 cubes × 12 features)
+		{5, 5},  // Hidden
+		{5, 5},  // Hidden
 		{12, 1}, // Output layer (reconstruct 12 features)
 	}
-	activations := []string{"linear", "relu", "relu"}
-	fullyConnected := []bool{true, true, true}
+	activations := []string{"linear", "relu", "relu", "relu"}
+	fullyConnected := []bool{true, true, true, true}
 
 	net := paragon.NewNetwork(layerSizes, activations, fullyConnected)
-	net.Train(inputs3D, targets3D, 20, 0.01, true)
+	net.Train(inputs3D, targets3D, 20, 0.1, true)
 
 	/*fmt.Println(lstDataInputPadding)
 	fmt.Println(lstDataExpectedOutputPadding)
