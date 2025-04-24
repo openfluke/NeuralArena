@@ -49,22 +49,26 @@ func basic(lstTmpData [][]string) {
 	fmt.Println("Expected intput Padded row:", lstDataInputPadding[0])
 
 	// Convert to 3D slices
+	fmt.Println("Convert to 3D slices inputs3D")
 	inputs3D := make([][][]float64, len(lstDataInputPadding))
 	for i, row := range lstDataInputPadding {
 		inputs3D[i] = [][]float64{row} // [1][96]
+		fmt.Println(inputs3D[i])
 	}
 
+	fmt.Println("Convert to 3D slices targets3D")
 	targets3D := make([][][]float64, len(lstDataExpectedOutputPadding))
 	for i, row := range lstDataExpectedOutputPadding {
 		targets3D[i] = [][]float64{row} // [1][12]
+		fmt.Println(targets3D[i])
 	}
 
 	layerSizes := []struct{ Width, Height int }{
 		{96, 1}, // Input layer (8 cubes × 12 features)
-		{5, 1},  // Hidden
+		{10, 1}, // Hidden
 		{12, 1}, // Output layer (reconstruct 12 features)
 	}
-	activations := []string{"linear", "relu", "linear"}
+	activations := []string{"linear", "relu", "relu"}
 	fullyConnected := []bool{true, true, true}
 
 	net := paragon.NewNetwork(layerSizes, activations, fullyConnected)
@@ -86,11 +90,33 @@ func basic(lstTmpData [][]string) {
 		expected = append(expected, target...) // Flatten target into expected
 		actual = append(actual, output...)     // Flatten prediction into actual
 	}
+
+	fmt.Println("---------SimplePRINT----------")
 	net.EvaluateModel(expected, actual) // Evaluate using the ADHD metric
 	fmt.Printf("🧠 ADHD Score: %.2f\n", net.Performance.Score)
 	fmt.Printf("📊 Deviation Buckets:\n")
 	for bucket, stats := range net.Performance.Buckets {
 		fmt.Printf(" - %s: %d samples\n", bucket, stats.Count)
 	}
+
+	fmt.Println("---------PrintFullDiagnostics----------")
+	net.EvaluateFull(expected, actual)
+	net.PrintFullDiagnostics()
+
+	fmt.Println("---------PrintSAMPLEDiagnostics----------")
+
+	// Prepare per-sample slices for sample-level comparison
+	expectedVectors := [][]float64{}
+	actualVectors := [][]float64{}
+
+	for i := range inputs3D {
+		net.Forward(inputs3D[i])
+		actualVectors = append(actualVectors, net.ExtractOutput())
+		expectedVectors = append(expectedVectors, targets3D[i][0])
+	}
+
+	// Compute and print sample-level diagnostics
+	perf := paragon.ComputePerSamplePerformance(expectedVectors, actualVectors, 0.01, net)
+	paragon.PrintSampleDiagnostics(perf, 0.01)
 
 }
