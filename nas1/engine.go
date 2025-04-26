@@ -230,7 +230,7 @@ func basic(lstTmpData [][]string) {
 	initialScore := net.Performance.Score
 
 	// run the iterative NAS
-	bestNet, bestScore := net.IterativeNAS(
+	bestNet, bestScore := net.IterativeInitNAS(
 		100,       // numClones
 		5,         // nasEpochs
 		0.01,      // baseLR
