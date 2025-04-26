@@ -120,4 +120,139 @@ func basic(lstTmpData [][]string) {
 	perf := paragon.ComputePerSamplePerformance(expectedVectors, actualVectors, 0.01, net)
 	paragon.PrintSampleDiagnostics(perf, 0.01)
 
+	// --- Neural Architecture Search ---------------------------------
+	/*fmt.Println("---------Neural Architecture Search----------")
+	numClones := 100                // how many mutated copies to evaluate
+	nasEpochs := 5                  // epochs of training per clone
+	baseLR := 0.01                  // starting learning-rate (decays inside NAS)
+	weightMutationRate := 0.05      // std-dev of Gaussian noise added to weights
+	earlyStopOnNegativeLoss := true // keep the training loop stable
+
+	bestNet, bestScore, improved, err := net.NormalNASLayerWiseGrowingEnhanced(
+		numClones,
+		nasEpochs,
+		baseLR,
+		weightMutationRate,
+		inputs3D,
+		targets3D,
+		earlyStopOnNegativeLoss,
+	)
+	if err != nil {
+		fmt.Printf("❌ NAS failed: %v\n", err)
+		return
+	}
+
+	// --- Evaluate best candidate ------------------------------------
+	expectedNAS, actualNAS := make([]float64, 0), make([]float64, 0)
+	for i := range inputs3D {
+		bestNet.Forward(inputs3D[i])
+		actualNAS = append(actualNAS, bestNet.ExtractOutput()...)
+		expectedNAS = append(expectedNAS, targets3D[i][0]...)
+	}
+	bestNet.EvaluateModel(expectedNAS, actualNAS)
+
+	fmt.Printf("🧠 Original Network ADHD Score: %.2f\n", net.Performance.Score)
+	fmt.Printf("🧠 Best NAS Network ADHD Score: %.2f\n", bestScore)
+	fmt.Printf("📊 Best NAS Deviation Buckets:\n")
+	for bucket, stats := range bestNet.Performance.Buckets {
+		fmt.Printf(" - %s: %d samples\n", bucket, stats.Count)
+	}
+	if improved {
+		fmt.Println("✅ NAS improved the network performance!")
+	} else {
+		fmt.Println("⚠️ NAS did not improve the network performance.")
+	}*/
+
+	// ---------- Iterative Neural Architecture Search -----------------
+	fmt.Println("---------Iterative Neural Architecture Search----------")
+
+	// --- NAS hyper-params you can tweak once here --------------------
+	/*numClones := 100 // per round
+	nasEpochs := 5
+	baseLR := 0.01
+	weightMutationRate := 0.05
+	earlyStop := true
+	targetADHD := 95.0 // stop when we reach this
+	maxAttempts := 10  // safety cap
+	NormalNASLayerWiseGrowingEnhanced := true
+	// -----------------------------------------------------------------
+
+	parentNet := net // start from the network you already trained
+	parentScore := net.Performance.Score
+	initialScore := parentScore
+	fmt.Printf("🔰 Starting ADHD Score: %.2f\n", parentScore)
+
+	for attempt := 1; attempt <= maxAttempts && parentScore < targetADHD; attempt++ {
+		fmt.Printf("\n🔄 NAS Attempt %d / %d (current ADHD %.2f)\n",
+			attempt, maxAttempts, parentScore)
+
+		candNet, candScore, improved, err := parentNet.NormalNASLayerWiseGrowingEnhanced(
+			numClones,
+			nasEpochs,
+			baseLR,
+			weightMutationRate,
+			inputs3D,
+			targets3D,
+			earlyStop,
+			NormalNASLayerWiseGrowingEnhanced,
+		)
+		if err != nil {
+			fmt.Printf("❌ NAS attempt %d failed: %v – skipping\n", attempt, err)
+			continue
+		}
+
+		// Evaluate candidate on full set (already done inside NAS, but good to keep)
+		// candScore is the ADHD score computed inside the NAS function.
+		if improved && candScore > parentScore {
+			fmt.Printf("✅ Improved: %.2f  →  %.2f\n", parentScore, candScore)
+			parentNet = candNet
+			parentScore = candScore
+		} else {
+			fmt.Printf("⚠️ No improvement this round (best %.2f)\n", parentScore)
+			// Optionally raise mutation strength to escape local minima
+			weightMutationRate *= 1.2
+		}
+	}
+
+	// ------------------- Final report --------------------------------
+	fmt.Println("\n====================== Final NAS Report ======================")
+	fmt.Printf("🧠 Original ADHD Score: %.2f\n", initialScore)
+	fmt.Printf("🧠 Best   ADHD Score: %.2f\n", parentScore)
+	if parentScore >= targetADHD {
+		fmt.Printf("🎉 Target of %.1f reached!\n", targetADHD)
+	} else {
+		fmt.Printf("🔎 Target not reached after %d attempts (best %.2f)\n",
+			maxAttempts, parentScore)
+	}
+	fmt.Println("==============================================================")*/
+
+	// capture the original score
+	initialScore := net.Performance.Score
+
+	// run the iterative NAS
+	bestNet, bestScore := net.IterativeNAS(
+		100,       // numClones
+		5,         // nasEpochs
+		0.01,      // baseLR
+		0.05,      // weightMutationRate
+		true,      // earlyStopOnNegativeLoss
+		true,      // enableActMutation
+		95.0,      // targetADHD
+		10,        // maxAttempts
+		inputs3D,  // inputs
+		targets3D, // targets
+	)
+
+	// final report
+	fmt.Println("\n====================== Final NAS Report ======================")
+	fmt.Printf("🧠 Original ADHD Score: %.2f\n", initialScore)
+	fmt.Printf("🧠 Best   ADHD Score: %.2f\n", bestScore)
+	if bestScore >= 95.0 {
+		fmt.Printf("🎉 Target of %.1f reached!\n", 95.0)
+	} else {
+		fmt.Printf("🔎 Target not reached after %d attempts (best %.2f)\n", 10, bestScore)
+	}
+	fmt.Println("==============================================================")
+
+	_ = bestNet
 }
