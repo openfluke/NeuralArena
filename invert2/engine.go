@@ -84,7 +84,11 @@ func main() {
 
 	//lets have some fun lol
 	//runStudentDistillationPermuteErrLR(trainSetInputs, trainSetTargets, nn)
-	runStudentDistillationPermuteErrLRExtreme(trainSetInputs, trainSetTargets, nn)
+	//runStudentDistillationPermuteErrLRExtreme(trainSetInputs, trainSetTargets, nn)
+	//studentDistillFromHijackedTargetsSweep(trainSetInputs, trainSetTargets, nn)
+	//studentDistillFromHijackedTargetsSweepProxyMod(trainSetInputs, trainSetTargets, nn)
+	//experimentalPermutationSweep(trainSetInputs, trainSetTargets, nn)
+	hybridStudentDistillationSweep(trainSetInputs, trainSetTargets, nn)
 
 	//projectiveDistillationUpstream(trainSetInputs, trainSetTargets, nn)
 	//echoDistillationPulse(trainSetInputs, trainSetTargets, nn)
@@ -134,6 +138,59 @@ func adjustNetworkUpstream(net *paragon.Network, input [][]float64, error float6
 			}
 		}
 
+		proxySignal *= 0.9
+	}
+}
+
+func adjustNetworkUpstreamModulated(
+	net *paragon.Network,
+	input [][]float64,
+	error float64,
+	lr float64,
+	maxUpdate float64,
+	damping float64,
+	proxyMod float64, // ← new: multiplier on proxy signal direction
+) {
+	// Step 1: Derive proxy signal from the input
+	var proxySignal float64
+	count := 0
+	for _, row := range input {
+		for _, v := range row {
+			proxySignal += v
+			count++
+		}
+	}
+	if count > 0 {
+		proxySignal /= float64(count)
+	}
+
+	// Step 2: Modulate signal (directional/intentional)
+	proxySignal *= proxyMod // ← direct multiplier (can be <0, >1, etc.)
+
+	// Step 3: Backward layer update using modulated signal
+	for layerIndex := net.OutputLayer; layerIndex > 0; layerIndex-- {
+		layer := &net.Layers[layerIndex]
+
+		for y := 0; y < layer.Height; y++ {
+			for x := 0; x < layer.Width; x++ {
+				neuron := layer.Neurons[y][x]
+
+				adj := lr * error * damping
+				if adj > maxUpdate {
+					adj = maxUpdate
+				} else if adj < -maxUpdate {
+					adj = -maxUpdate
+				}
+
+				neuron.Bias += adj
+
+				for i := range neuron.Inputs {
+					neuron.Inputs[i].Weight += adj * proxySignal
+				}
+			}
+		}
+
+		// Optionally decay the signal (mimicking depth falloff)
 		proxySignal *= 0.9
 	}
 }
