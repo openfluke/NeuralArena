@@ -23,11 +23,68 @@ func main() {
 	if err != nil {
 		log.Fatalf("Training load failed: %v", err)
 	}
+	testInputs, testTargets, err := loadMNISTData(mnistDir, false)
+	if err != nil {
+		log.Fatalf("Test load failed: %v", err)
+	}
+	trainSetInputs, trainSetTargets, _, _ := paragon.SplitDataset(trainInputs, trainTargets, 0.8)
+
+	// --- Build Model ---
+	layerSizes := []struct{ Width, Height int }{{28, 28}, {16, 16}, {10, 1}}
+	activations := []string{"leaky_relu", "leaky_relu", "softmax"}
+	fullyConnected := []bool{true, false, true}
+	//modelPath := filepath.Join(modelDir, modelFile)
+
+	var nn *paragon.Network
+	fmt.Println("🧠 No pre-trained model found. Starting training...")
+	nn = paragon.NewNetwork(layerSizes, activations, fullyConnected)
+	nn.Train(trainSetInputs, trainSetTargets, 10, 0.01, true)
+	fmt.Println("✅ Training complete.")
+
+	// --- ADHD Evaluation ---
+	var expected, predicted []float64
+	for i, input := range testInputs {
+		nn.Forward(input)
+		out := extractOutput(nn)
+		pred := paragon.ArgMax(out)
+		trueLabel := paragon.ArgMax(testTargets[i][0])
+		expected = append(expected, float64(trueLabel))
+		predicted = append(predicted, float64(pred))
+	}
+	nn.EvaluateModel(expected, predicted)
+
+	// --- Unified ADHD Diagnostics ---
+	fmt.Println("\n---------SimplePRINT----------")
+	fmt.Printf("🧠 ADHD Score: %.2f\n", nn.Performance.Score)
+	fmt.Println("📊 Deviation Buckets:")
+	for bucket, stats := range nn.Performance.Buckets {
+		fmt.Printf(" - %-7s → %d samples\n", bucket, stats.Count)
+	}
+
+	fmt.Println("\n---------PrintFullDiagnostics----------")
+	nn.EvaluateFull(expected, predicted)
+	nn.PrintFullDiagnostics()
+
+	fmt.Println("\n---------PrintSAMPLEDiagnostics----------")
+	expectedVectors := make([][]float64, len(testInputs))
+	actualVectors := make([][]float64, len(testInputs))
+	for i := range testInputs {
+		nn.Forward(testInputs[i])
+		actualVectors[i] = nn.ExtractOutput()
+		expectedVectors[i] = testTargets[i][0]
+	}
+
+	perSample := paragon.ComputePerSamplePerformance(expectedVectors, actualVectors, 0.01, nn)
+	paragon.PrintSampleDiagnostics(perSample, 0.01)
+
+	output := trainTargets[0]
+	reconstructed := nn.ReverseInferFromOutput(output)
+	_ = SaveFloatImage(reconstructed, "reconstructed_trained.png")
 
 	// --- Reverse Inference from First Sample ---
 	//RunReverseTest(trainInputs, trainTargets, nil, "before_proxy")
 
-	bestStudent := TuneStudentWithProxy(trainInputs, trainTargets)
+	//bestStudent := TuneStudentWithProxy(trainInputs, trainTargets)
 
 	//RunReverseAttributionTuning(trainInputs, trainTargets, bestStudent)
 
@@ -38,7 +95,7 @@ func main() {
 	//RunReverseSetPercentTuning(trainInputs, trainTargets, bestStudent, (0.000016667)*2)
 	//RunReverseSetPercentTuning(trainInputs, trainTargets, bestStudent, 1.0)
 	//RunBidirectionalConstraintTraining(trainInputs, trainTargets, bestStudent, 0.01, 0.9)
-	RunSandwichTraining(trainInputs, trainTargets, bestStudent, 0.01, 0.9)
+	//RunSandwichTraining(trainInputs, trainTargets, bestStudent, 0.01, 0.9)
 
 }
 
