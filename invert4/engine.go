@@ -81,6 +81,22 @@ func main() {
 	reconstructed := nn.ReverseInferFromOutput(output)
 	_ = SaveFloatImage(reconstructed, "reconstructed_trained.png")
 
+	// --- Reverse Inference: Generate Images from One-Hot Softmax Vectors ---
+	for digit := 0; digit <= 9; digit++ {
+		output := make([][]float64, 1)  // batch of 1
+		output[0] = make([]float64, 10) // 10-class output
+		output[0][digit] = 1.0          // One-hot at index `digit`
+
+		reconstructed := nn.ReverseInferFromOutput(output)
+		filename := fmt.Sprintf("reconstructed_%d.png", digit)
+		err := SaveFloatImage(reconstructed, filename)
+		if err != nil {
+			fmt.Printf("❌ Failed to save image %s: %v\n", filename, err)
+		} else {
+			fmt.Printf("✅ Saved: %s\n", filename)
+		}
+	}
+
 	// --- Reverse Inference from First Sample ---
 	//RunReverseTest(trainInputs, trainTargets, nil, "before_proxy")
 
