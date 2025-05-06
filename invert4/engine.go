@@ -97,6 +97,24 @@ func main() {
 		}
 	}
 
+	for digit := 0; digit <= 9; digit++ {
+		target := make([][]float64, 1)
+		target[0] = make([]float64, 10)
+		target[0][digit] = 1.0
+
+		inferred := nn.InferInputFromOutput(target, 100, 0.05)
+		_ = SaveFloatImage(inferred, fmt.Sprintf("inferred_%d.png", digit))
+	}
+
+	for digit := 0; digit <= 9; digit++ {
+		target := make([][]float64, 1)
+		target[0] = make([]float64, 10)
+		target[0][digit] = 1.0
+
+		reverseInferred := nn.BackwardFromOutput(target)
+		_ = SaveFloatImage(reverseInferred, fmt.Sprintf("reverse_%d.png", digit))
+	}
+
 	// --- Reverse Inference from First Sample ---
 	//RunReverseTest(trainInputs, trainTargets, nil, "before_proxy")
 
