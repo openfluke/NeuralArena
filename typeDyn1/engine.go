@@ -19,14 +19,22 @@ const (
 type BenchmarkResult struct {
 	ModelName string
 	TypeName  string
-	Duration  time.Duration
+	Duration  time.Duration // total train+eval time
+	Score     float64
+}
+
+type LoadedBenchmarkResult struct {
+	ModelName string
+	TypeName  string
+	Duration  time.Duration // just eval (inference) time
 	Score     float64
 }
 
 var (
-	results []BenchmarkResult
-	wg      sync.WaitGroup
-	mu      sync.Mutex
+	results       []BenchmarkResult
+	loadedResults []LoadedBenchmarkResult
+	wg            sync.WaitGroup
+	mu            sync.Mutex
 )
 
 func main() {
@@ -38,17 +46,25 @@ func main() {
 	testInputs, testTargets, _ := loadMNISTData(mnistDir, false)
 	trainSetInputs, trainSetTargets, _, _ := paragon.SplitDataset(trainInputs, trainTargets, 0.8)
 
-	// Launch benchmarks
+	// Launch and save all trained models
 	runAll(trainSetInputs, trainSetTargets, testInputs, testTargets)
-
 	wg.Wait()
 
-	// --- Summary Output ---
-	fmt.Println("\n📊 Final Benchmark Results:")
+	// --- Summary Output for Trained Models ---
+	fmt.Println("\n📊 Final Benchmark Results (Trained):")
 	fmt.Printf("%-14s %-10s %-12s %s\n", "Model", "Type", "Time", "ADHD Score")
 	for _, r := range results {
 		fmt.Printf("%-14s %-10s %-12s %.2f\n",
 			r.ModelName, r.TypeName, r.Duration.Truncate(time.Millisecond), r.Score)
+	}
+
+	// --- Evaluate all models by loading only (no retrain) ---
+	runAllLoadedOnly(testInputs, testTargets)
+
+	fmt.Println("\n📦 Reloaded Benchmark Results (Loaded from JSON):")
+	fmt.Printf("%-14s %-10s %-12s %s\n", "Model", "Type", "Time", "ADHD Score")
+	for _, r := range loadedResults {
+		fmt.Printf("%-14s %-10s %-12s %.2f\n", r.ModelName, r.TypeName, r.Duration.Truncate(time.Millisecond), r.Score)
 	}
 }
 
@@ -65,7 +81,7 @@ func runAll(
 		launch(model, "int", trainAndEvaluate[int], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
 		launch(model, "int8", trainAndEvaluate[int8], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
 		launch(model, "int16", trainAndEvaluate[int16], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
-
+		launch(model, "int32", trainAndEvaluate[int32], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
 		launch(model, "int64", trainAndEvaluate[int64], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
 
 		launch(model, "uint", trainAndEvaluate[uint], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
@@ -73,15 +89,13 @@ func runAll(
 		launch(model, "uint16", trainAndEvaluate[uint16], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
 		launch(model, "uint32", trainAndEvaluate[uint32], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
 		launch(model, "uint64", trainAndEvaluate[uint64], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
-
-		launch(model, "int32", trainAndEvaluate[int32], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
 	}
 }
 
 // 👇 Launch a single benchmark in a goroutine
 func launch[T paragon.Numeric](
 	model, typeName string,
-	evalFn func(string, [][][]float64, [][][]float64, [][][]float64, [][][]float64, T, T) float64,
+	evalFn func(string, [][][]float64, [][][]float64, [][][]float64, [][][]float64, T, T) (float64, time.Duration),
 	trainInputs, trainTargets, testInputs, testTargets [][][]float64,
 	clipUpper, clipLower T,
 ) {
@@ -89,27 +103,28 @@ func launch[T paragon.Numeric](
 	go func() {
 		defer wg.Done()
 		start := time.Now()
-		score := evalFn(model, trainInputs, trainTargets, testInputs, testTargets, clipUpper, clipLower)
-		elapsed := time.Since(start)
+		score, _ := evalFn(model, trainInputs, trainTargets, testInputs, testTargets, clipUpper, clipLower)
+
+		totalElapsed := time.Since(start) // total (train + eval + save) time
 
 		mu.Lock()
 		results = append(results, BenchmarkResult{
 			ModelName: model,
 			TypeName:  typeName,
-			Duration:  elapsed,
+			Duration:  totalElapsed,
 			Score:     score,
 		})
 		mu.Unlock()
 	}()
 }
 
-// 🧠 Main per-model benchmark
+// 🧠 Main per-model benchmark and save model
 func trainAndEvaluate[T paragon.Numeric](
 	modelType string,
 	trainInputs, trainTargets [][][]float64,
 	testInputs, testTargets [][][]float64,
 	clipUpper, clipLower T, // still passed but ignored here
-) float64 {
+) (float64, time.Duration) {
 	layers := []struct{ Width, Height int }{
 		{28, 28}, {16, 16}, {10, 1},
 	}
@@ -137,10 +152,11 @@ func trainAndEvaluate[T paragon.Numeric](
 			return 1
 		}
 	}
-	//nn.Debug = true
 	nn.Train(trainInputs, trainTargets, numEpochs, learnRate, true, clipUpper, clipLower)
-	//nn.Debug = false
+
+	// Evaluate trained model (inference timing)
 	var expected, predicted []float64
+	startEval := time.Now()
 	for i := range testInputs {
 		nn.Forward(testInputs[i])
 		nn.ApplySoftmax()
@@ -151,22 +167,95 @@ func trainAndEvaluate[T paragon.Numeric](
 		predicted = append(predicted, float64(pred))
 	}
 	nn.EvaluateModel(expected, predicted)
-	return nn.Performance.Score
+	origScore := nn.Performance.Score
+	evalElapsed := time.Since(startEval)
+
+	// SAVE MODEL
+	filename := fmt.Sprintf("model_%s_%s.json", modelType, nn.TypeName)
+	if err := nn.SaveJSON(filename); err != nil {
+		fmt.Printf("❌ Could not save model %s: %v\n", filename, err)
+	}
+
+	return origScore, evalElapsed
 }
 
-// scale.go
-func scaleDataset(in [][][]float64, factor float64) [][][]float64 {
-	out := make([][][]float64, len(in))
-	for i, sample := range in {
-		H, W := len(sample), len(sample[0])
-		scaled := make([][]float64, H)
-		for y := 0; y < H; y++ {
-			scaled[y] = make([]float64, W)
-			for x := 0; x < W; x++ {
-				scaled[y][x] = sample[y][x] * factor
-			}
+// --- New: Evaluate by loading only ---
+func runAllLoadedOnly(testInputs, testTargets [][][]float64) {
+	models := []string{"Standard", "Replay", "DynamicReplay"}
+	types := []string{"float32", "float64", "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16", "uint32", "uint64"}
+
+	for _, model := range models {
+		for _, typeName := range types {
+			filename := fmt.Sprintf("model_%s_%s.json", model, typeName)
+			score, elapsed := evaluateLoadedModel(model, typeName, filename, testInputs, testTargets)
+			loadedResults = append(loadedResults, LoadedBenchmarkResult{model, typeName, elapsed, score})
 		}
-		out[i] = scaled
 	}
-	return out
+}
+
+func evaluateLoadedModel(
+	model, typeName, filename string,
+	testInputs, testTargets [][][]float64,
+) (float64, time.Duration) {
+	layers := []struct{ Width, Height int }{{28, 28}, {16, 16}, {10, 1}}
+	acts := []string{"leaky_relu", "leaky_relu", "softmax"}
+	full := []bool{true, false, true}
+
+	switch typeName {
+	case "float32":
+		return evalLoadedHelper[float32](filename, layers, acts, full, testInputs, testTargets)
+	case "float64":
+		return evalLoadedHelper[float64](filename, layers, acts, full, testInputs, testTargets)
+	case "int":
+		return evalLoadedHelper[int](filename, layers, acts, full, testInputs, testTargets)
+	case "int8":
+		return evalLoadedHelper[int8](filename, layers, acts, full, testInputs, testTargets)
+	case "int16":
+		return evalLoadedHelper[int16](filename, layers, acts, full, testInputs, testTargets)
+	case "int32":
+		return evalLoadedHelper[int32](filename, layers, acts, full, testInputs, testTargets)
+	case "int64":
+		return evalLoadedHelper[int64](filename, layers, acts, full, testInputs, testTargets)
+	case "uint":
+		return evalLoadedHelper[uint](filename, layers, acts, full, testInputs, testTargets)
+	case "uint8":
+		return evalLoadedHelper[uint8](filename, layers, acts, full, testInputs, testTargets)
+	case "uint16":
+		return evalLoadedHelper[uint16](filename, layers, acts, full, testInputs, testTargets)
+	case "uint32":
+		return evalLoadedHelper[uint32](filename, layers, acts, full, testInputs, testTargets)
+	case "uint64":
+		return evalLoadedHelper[uint64](filename, layers, acts, full, testInputs, testTargets)
+	default:
+		fmt.Printf("❌ Unknown type %s for %s\n", typeName, filename)
+		return -1, 0
+	}
+}
+
+func evalLoadedHelper[T paragon.Numeric](
+	filename string,
+	layers []struct{ Width, Height int },
+	acts []string,
+	full []bool,
+	testInputs, testTargets [][][]float64,
+) (float64, time.Duration) {
+	nn := paragon.NewNetwork[T](layers, acts, full)
+	if err := nn.LoadJSON(filename); err != nil {
+		fmt.Printf("❌ Failed to load %s: %v\n", filename, err)
+		return -1, 0
+	}
+	var expected, predicted []float64
+	start := time.Now()
+	for i := range testInputs {
+		nn.Forward(testInputs[i])
+		nn.ApplySoftmax()
+		out := nn.ExtractOutput()
+		pred := paragon.ArgMax(out)
+		label := paragon.ArgMax(testTargets[i][0])
+		expected = append(expected, float64(label))
+		predicted = append(predicted, float64(pred))
+	}
+	nn.EvaluateModel(expected, predicted)
+	elapsed := time.Since(start)
+	return nn.Performance.Score, elapsed
 }
