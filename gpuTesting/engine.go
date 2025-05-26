@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"paragon"
@@ -76,15 +80,72 @@ func main() {
 	fmt.Printf("Standard (no replay):  %v\n", elapsed1)
 	fmt.Printf("Manual Replay (x10):   %v\n", elapsed2)
 
-	// 💾 Save models
-	if err := os.MkdirAll("models", 0755); err != nil {
+	// 💾 Save models to absolute paths
+	modelDir := filepath.Join(os.Getenv("HOME"), "git", "paradawn", "models")
+	if err := os.MkdirAll(modelDir, 0755); err != nil {
 		panic(err)
 	}
-	if err := standard.SaveJSON("models/mnist_standard.json"); err != nil {
+	stdModel := filepath.Join(modelDir, "mnist_standard.json")
+	repModel := filepath.Join(modelDir, "mnist_manual_replay.json")
+
+	if err := standard.SaveJSON(stdModel); err != nil {
 		panic(err)
 	}
-	if err := replay.SaveJSON("models/mnist_manual_replay.json"); err != nil {
+	if err := replay.SaveJSON(repModel); err != nil {
 		panic(err)
 	}
-	fmt.Println("✅ Models saved to: mnist_standard.json & mnist_manual_replay.json")
+	fmt.Println("✅ Models saved to:")
+	fmt.Println(" -", stdModel)
+	fmt.Println(" -", repModel)
+
+	// 🚀 Run compiled C++ backend
+	execPath := filepath.Join(os.Getenv("HOME"), "git", "paradawn", "build", "paradawn")
+
+	fmt.Println("🔁 Running compiled executable with standard model (CPU)...")
+	RunParadawnExecutable(execPath, stdModel, 0)
+
+	fmt.Println("🔁 Running compiled executable with replay model (GPU x8)...")
+	RunParadawnExecutable(execPath, stdModel, 8)
+}
+
+// RunParadawnExecutable runs the C++ executable with stdin input and model
+func RunParadawnExecutable(exePath, modelPath string, gpuLayers int) {
+	fmt.Printf("🚀 Running: %s %s [--gpu=%d]\n", exePath, modelPath, gpuLayers)
+
+	// Build 28x28 input stream as expected by C++ stdin
+	var input strings.Builder
+	for y := 0; y < 28; y++ {
+		for x := 0; x < 28; x++ {
+			input.WriteString("0 ")
+		}
+		input.WriteString("\n")
+	}
+	inputStr := input.String()
+
+	// Build args
+	args := []string{modelPath}
+	if gpuLayers > 0 {
+		args = append(args, fmt.Sprintf("--gpu=%d", gpuLayers))
+	}
+
+	cmd := exec.Command(exePath, args...)
+	cmd.Stdin = strings.NewReader(inputStr)
+
+	// Capture output
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
+
+	start := time.Now()
+	err := cmd.Run()
+	elapsed := time.Since(start)
+
+	fmt.Println("------ [EXECUTION RESULT] ------")
+	if err != nil {
+		fmt.Println("❌ Error:", err)
+	}
+	fmt.Println("🔧 STDOUT:", strings.TrimSpace(outBuf.String()))
+	fmt.Println("⚠️ STDERR:", strings.TrimSpace(errBuf.String()))
+	fmt.Println("⏱️  Duration:", elapsed)
+	fmt.Println("---------------------------------")
 }
