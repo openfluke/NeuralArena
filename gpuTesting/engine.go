@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -101,8 +100,8 @@ func main() {
 	// 🚀 Run compiled C++ backend
 	execPath := filepath.Join(os.Getenv("HOME"), "git", "paradawn", "build", "paradawn")
 
-	fmt.Println("🔁 Running compiled executable with standard model (CPU)...")
-	RunParadawnExecutable(execPath, stdModel, 0)
+	//fmt.Println("🔁 Running compiled executable with standard model (CPU)...")
+	//RunParadawnExecutable(execPath, stdModel, 0)
 
 	fmt.Println("🔁 Running compiled executable with replay model (GPU x8)...")
 	RunParadawnExecutable(execPath, stdModel, 8)
@@ -112,7 +111,7 @@ func main() {
 func RunParadawnExecutable(exePath, modelPath string, gpuLayers int) {
 	fmt.Printf("🚀 Running: %s %s [--gpu=%d]\n", exePath, modelPath, gpuLayers)
 
-	// Build 28x28 input stream as expected by C++ stdin
+	// Build 28x28 input stream
 	var input strings.Builder
 	for y := 0; y < 28; y++ {
 		for x := 0; x < 28; x++ {
@@ -122,30 +121,70 @@ func RunParadawnExecutable(exePath, modelPath string, gpuLayers int) {
 	}
 	inputStr := input.String()
 
-	// Build args
+	// Show the input that will be streamed
+	fmt.Println("📤 Sending input to paradawn (28x28 zeros):")
+	fmt.Println(strings.TrimSpace(inputStr))
+
+	// Prepare command args
 	args := []string{modelPath}
 	if gpuLayers > 0 {
 		args = append(args, fmt.Sprintf("--gpu=%d", gpuLayers))
 	}
+	fmt.Printf("🛠️ Executing command: %s %s\n", exePath, strings.Join(args, " "))
 
+	// Set up the command
 	cmd := exec.Command(exePath, args...)
 	cmd.Stdin = strings.NewReader(inputStr)
 
-	// Capture output
-	var outBuf, errBuf bytes.Buffer
-	cmd.Stdout = &outBuf
-	cmd.Stderr = &errBuf
+	// Create pipes for stdout/stderr
+	stdout, _ := cmd.StdoutPipe()
+	stderr, _ := cmd.StderrPipe()
 
+	// Start the process
 	start := time.Now()
-	err := cmd.Run()
+	if err := cmd.Start(); err != nil {
+		fmt.Println("❌ Failed to start command:", err)
+		return
+	}
+
+	// Stream STDOUT
+	go func() {
+		fmt.Println("🔧 [paradawn STDOUT]")
+		buf := make([]byte, 1024)
+		for {
+			n, err := stdout.Read(buf)
+			if n > 0 {
+				fmt.Print(string(buf[:n]))
+			}
+			if err != nil {
+				break
+			}
+		}
+	}()
+
+	// Stream STDERR
+	go func() {
+		fmt.Println("⚠️ [paradawn STDERR]")
+		buf := make([]byte, 1024)
+		for {
+			n, err := stderr.Read(buf)
+			if n > 0 {
+				fmt.Print(string(buf[:n]))
+			}
+			if err != nil {
+				break
+			}
+		}
+	}()
+
+	// Wait for the process to finish
+	if err := cmd.Wait(); err != nil {
+		fmt.Println("❌ Process error:", err)
+	}
 	elapsed := time.Since(start)
 
-	fmt.Println("------ [EXECUTION RESULT] ------")
-	if err != nil {
-		fmt.Println("❌ Error:", err)
-	}
-	fmt.Println("🔧 STDOUT:", strings.TrimSpace(outBuf.String()))
-	fmt.Println("⚠️ STDERR:", strings.TrimSpace(errBuf.String()))
-	fmt.Println("⏱️  Duration:", elapsed)
+	// Timing summary
+	fmt.Println()
+	fmt.Println("⏱️  Total Duration:", elapsed)
 	fmt.Println("---------------------------------")
 }
