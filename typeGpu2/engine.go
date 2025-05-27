@@ -43,9 +43,13 @@ func CompareCPUVsGPU() {
 	rand.Seed(42)
 	nn := paragon.NewNetwork[float32]([]struct{ Width, Height int }{
 		{28, 28}, // Input layer (MNIST-like)
-		{16, 16}, // Hidden layer
+		{32, 32}, // Hidden layer
+		{32, 32}, // Hidden layer
+		{32, 32}, // Hidden layer
+		{32, 32}, // Hidden layer
+		{32, 32}, // Hidden layer
 		{10, 1},  // Output layer
-	}, []string{"leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true})
+	}, []string{"leaky_relu", "leaky_relu", "leaky_relu", "leaky_relu", "leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true, true, true, true, true})
 
 	input := make([][]float64, 28)
 	for i := range input {
@@ -67,7 +71,15 @@ func CompareCPUVsGPU() {
 	cpuOut := nn.GetOutput()
 
 	nn.WebGPUNative = true
-	nn.BuildGPUKernels()
+	//nn.BuildGPUKernels()
+	// Initialize optimized GPU
+	err := nn.InitializeOptimizedGPU()
+	if err != nil {
+		log.Fatalf("Failed to initialize GPU: %v", err)
+	}
+
+	defer nn.CleanupOptimizedGPU()
+
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
 		nn.Forward(input)
@@ -102,10 +114,11 @@ func TestGPUPerformance() {
 
 	// Create a network
 	nn := paragon.NewNetwork[float32]([]struct{ Width, Height int }{
-		{28, 28}, // Input
-		{16, 16}, // Hidden
-		{10, 1},  // Output
-	}, []string{"leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true})
+		{28, 28},   // Input
+		{16, 16},   // Hidden
+		{160, 160}, // Hidden
+		{10, 1},    // Output
+	}, []string{"leaky_relu", "leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true, true})
 
 	// Load the model
 	if err := nn.LoadJSON("model_Standard_float32.json"); err != nil {
@@ -138,7 +151,14 @@ func TestGPUPerformance() {
 
 	// Test GPU performance
 	nn.WebGPUNative = true
-	nn.BuildGPUKernels()
+	//nn.BuildGPUKernels()
+
+	err := nn.InitializeOptimizedGPU()
+	if err != nil {
+		log.Fatalf("Failed to initialize GPU: %v", err)
+	}
+
+	defer nn.CleanupOptimizedGPU()
 
 	// Verify GPU setup
 	if err := nn.VerifyGPUSetup(); err != nil {
@@ -235,7 +255,13 @@ func TestGPUScaling() {
 
 		// GPU timing
 		nn.WebGPUNative = true
-		nn.BuildGPUKernels()
+
+		err := nn.InitializeOptimizedGPU()
+		if err != nil {
+			log.Fatalf("Failed to initialize GPU: %v", err)
+		}
+
+		defer nn.CleanupOptimizedGPU()
 
 		// Warm up
 		nn.Forward(input)
@@ -254,63 +280,13 @@ func TestGPUScaling() {
 	}
 }
 
-// Test batch processing (process multiple samples in one GPU call)
-func TestBatchProcessing() {
-	fmt.Println("\n=== Batch Processing Test ===")
-
-	nn := paragon.NewNetwork[float32]([]struct{ Width, Height int }{
-		{28, 28}, {32, 32}, {10, 1},
-	}, []string{"leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true})
-
-	// Create batch of inputs
-	batchSizes := []int{1, 10, 50, 100}
-
-	for _, batchSize := range batchSizes {
-		fmt.Printf("\nBatch size %d:\n", batchSize)
-
-		// Create batch
-		inputs := make([][][]float64, batchSize)
-		for b := 0; b < batchSize; b++ {
-			inputs[b] = make([][]float64, 28)
-			for i := 0; i < 28; i++ {
-				inputs[b][i] = make([]float64, 28)
-				for j := 0; j < 28; j++ {
-					inputs[b][i][j] = rand.Float64()
-				}
-			}
-		}
-
-		// CPU timing
-		nn.WebGPUNative = false
-		start := time.Now()
-		for _, input := range inputs {
-			nn.Forward(input)
-		}
-		cpuTime := time.Since(start)
-
-		// GPU timing
-		nn.WebGPUNative = true
-		nn.BuildGPUKernels()
-		start = time.Now()
-		for _, input := range inputs {
-			nn.Forward(input)
-		}
-		gpuTime := time.Since(start)
-
-		fmt.Printf("  CPU total: %v (%.3f ms/sample)\n",
-			cpuTime, float64(cpuTime.Microseconds())/float64(batchSize)/1000)
-		fmt.Printf("  GPU total: %v (%.3f ms/sample)\n",
-			gpuTime, float64(gpuTime.Microseconds())/float64(batchSize)/1000)
-		fmt.Printf("  Speedup: %.2fx\n", float64(cpuTime)/float64(gpuTime))
-	}
-}
-
 func main() {
 
 	CompareCPUVsGPU()
-	TestGPUPerformance()
 
-	return
+	TestGPUScaling()
+
+	//return
 	// --- Load MNIST ---
 	if err := ensureMNISTDownloads(mnistDir); err != nil {
 		log.Fatalf("MNIST download error: %v", err)
@@ -517,7 +493,13 @@ func evalLoadedHelper[T paragon.Numeric](
 	}
 	if gpuOn {
 		nn.WebGPUNative = true
-		nn.BuildGPUKernels()
+		//nn.BuildGPUKernels()
+		err := nn.InitializeOptimizedGPU()
+		if err != nil {
+			log.Fatalf("Failed to initialize GPU: %v", err)
+		}
+
+		defer nn.CleanupOptimizedGPU()
 	}
 	var expected, predicted []float64
 	start := time.Now()

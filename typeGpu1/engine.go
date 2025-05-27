@@ -180,7 +180,7 @@ func trainAndEvaluate[T paragon.Numeric](
 // --- New: Evaluate by loading only ---
 func runAllLoadedOnly(testInputs, testTargets [][][]float64) {
 	models := []string{"Standard", "Replay", "DynamicReplay"}
-	types := []string{"float32", "int32", "uint32"}
+	types := []string{"float32"}
 
 	for _, model := range models {
 		for _, typeName := range types {
@@ -244,6 +244,13 @@ func evalLoadedHelper[T paragon.Numeric](
 	}
 	if gpuOn {
 		nn.WebGPUNative = true
+		//nn.BuildGPUKernels()
+		err := nn.InitializeOptimizedGPU()
+		if err != nil {
+			log.Fatalf("Failed to initialize GPU: %v", err)
+		}
+
+		defer nn.CleanupOptimizedGPU()
 	}
 	var expected, predicted []float64
 	start := time.Now()
