@@ -46,6 +46,12 @@ func main() {
 	testInputs, testTargets, _ := loadMNISTData(mnistDir, false)
 	//trainSetInputs, trainSetTargets, _, _ := paragon.SplitDataset(trainInputs, trainTargets, 0.8)
 
+	//trainSetInputs, trainSetTargets, _, _ := paragon.SplitDataset(trainInputs, trainTargets, 0.8)
+
+	trainInputs, trainTargets, _ := loadMNISTData(mnistDir, true)
+
+	runAll(trainInputs, trainTargets, testInputs, testTargets)
+
 	// --- Evaluate all models by loading only (no retrain) ---
 	runAllLoadedOnly(testInputs, testTargets)
 
@@ -74,19 +80,19 @@ func runAll(
 
 	for _, model := range models {
 		launch(model, "float32", trainAndEvaluate[float32], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
-		launch(model, "float64", trainAndEvaluate[float64], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
+		/*	launch(model, "float64", trainAndEvaluate[float64], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
 
-		launch(model, "int", trainAndEvaluate[int], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
-		launch(model, "int8", trainAndEvaluate[int8], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
-		launch(model, "int16", trainAndEvaluate[int16], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
-		launch(model, "int32", trainAndEvaluate[int32], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
-		launch(model, "int64", trainAndEvaluate[int64], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
+			launch(model, "int", trainAndEvaluate[int], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
+			launch(model, "int8", trainAndEvaluate[int8], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
+			launch(model, "int16", trainAndEvaluate[int16], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
+			launch(model, "int32", trainAndEvaluate[int32], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
+			launch(model, "int64", trainAndEvaluate[int64], trainInputs, trainTargets, testInputs, testTargets, 5, -5)
 
-		launch(model, "uint", trainAndEvaluate[uint], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
-		launch(model, "uint8", trainAndEvaluate[uint8], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
-		launch(model, "uint16", trainAndEvaluate[uint16], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
-		launch(model, "uint32", trainAndEvaluate[uint32], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
-		launch(model, "uint64", trainAndEvaluate[uint64], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
+			launch(model, "uint", trainAndEvaluate[uint], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
+			launch(model, "uint8", trainAndEvaluate[uint8], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
+			launch(model, "uint16", trainAndEvaluate[uint16], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
+			launch(model, "uint32", trainAndEvaluate[uint32], trainInputs, trainTargets, testInputs, testTargets, 5, 0)
+			launch(model, "uint64", trainAndEvaluate[uint64], trainInputs, trainTargets, testInputs, testTargets, 5, 0)*/
 	}
 }
 
