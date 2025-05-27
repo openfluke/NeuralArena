@@ -299,6 +299,8 @@ func main() {
 
 	runAll(trainInputs, trainTargets, testInputs, testTargets)
 
+	wg.Wait()
+
 	// --- Evaluate all models by loading only (no retrain) ---
 	runAllLoadedOnly(testInputs, testTargets)
 

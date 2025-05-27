@@ -51,7 +51,7 @@ func main() {
 	trainInputs, trainTargets, _ := loadMNISTData(mnistDir, true)
 
 	runAll(trainInputs, trainTargets, testInputs, testTargets)
-
+	wg.Wait()
 	// --- Evaluate all models by loading only (no retrain) ---
 	runAllLoadedOnly(testInputs, testTargets)
 
