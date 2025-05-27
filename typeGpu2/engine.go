@@ -42,13 +42,7 @@ var (
 func CompareCPUVsGPU() {
 	rand.Seed(42)
 	nn := paragon.NewNetwork[float32]([]struct{ Width, Height int }{
-		{28, 28}, // Input layer (MNIST-like)
-		{32, 32}, // Hidden layer
-		{32, 32}, // Hidden layer
-		{32, 32}, // Hidden layer
-		{32, 32}, // Hidden layer
-		{32, 32}, // Hidden layer
-		{10, 1},  // Output layer
+		{28, 28}, {32, 32}, {32, 32}, {32, 32}, {32, 32}, {32, 32}, {10, 1},
 	}, []string{"leaky_relu", "leaky_relu", "leaky_relu", "leaky_relu", "leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true, true, true, true, true})
 
 	input := make([][]float64, 28)
@@ -62,6 +56,7 @@ func CompareCPUVsGPU() {
 	const iterations = 100
 	var cpuDuration, gpuDuration time.Duration
 
+	// CPU Test
 	nn.WebGPUNative = false
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
@@ -70,15 +65,16 @@ func CompareCPUVsGPU() {
 	}
 	cpuOut := nn.GetOutput()
 
+	// GPU Test
 	nn.WebGPUNative = true
-	//nn.BuildGPUKernels()
-	// Initialize optimized GPU
 	err := nn.InitializeOptimizedGPU()
 	if err != nil {
 		log.Fatalf("Failed to initialize GPU: %v", err)
 	}
-
 	defer nn.CleanupOptimizedGPU()
+
+	// Warm-up run to avoid initialization overhead in timing
+	nn.Forward(input)
 
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
@@ -90,6 +86,7 @@ func CompareCPUVsGPU() {
 	fmt.Printf("Average CPU Forward Pass (%d iterations): %v\n", iterations, cpuDuration/time.Duration(iterations))
 	fmt.Printf("Average GPU Forward Pass (%d iterations): %v\n", iterations, gpuDuration/time.Duration(iterations))
 
+	// Output comparison
 	if len(cpuOut) != len(gpuOut) {
 		fmt.Printf("Output length mismatch: CPU=%d, GPU=%d\n", len(cpuOut), len(gpuOut))
 		return
@@ -104,8 +101,6 @@ func CompareCPUVsGPU() {
 	if !mismatch {
 		fmt.Println("CPU and GPU outputs match within tolerance (1e-5)")
 	}
-	fmt.Printf("CPU Output: %v\n", cpuOut)
-	fmt.Printf("GPU Output: %v\n", gpuOut)
 }
 
 // Add this function to your test file to verify GPU is working
@@ -285,7 +280,7 @@ func main() {
 	CompareCPUVsGPU()
 
 	TestGPUScaling()
-
+	return
 	//return
 	// --- Load MNIST ---
 	if err := ensureMNISTDownloads(mnistDir); err != nil {
@@ -295,12 +290,12 @@ func main() {
 	testInputs, testTargets, _ := loadMNISTData(mnistDir, false)
 	//trainSetInputs, trainSetTargets, _, _ := paragon.SplitDataset(trainInputs, trainTargets, 0.8)
 
-	trainInputs, trainTargets, _ := loadMNISTData(mnistDir, true)
+	//	trainInputs, trainTargets, _ := loadMNISTData(mnistDir, true)
 
-	runAll(trainInputs, trainTargets, testInputs, testTargets)
-
-	wg.Wait()
-
+	//	runAll(trainInputs, trainTargets, testInputs, testTargets)
+	gpuOn = true
+	//wg.Wait()
+	//return
 	// --- Evaluate all models by loading only (no retrain) ---
 	runAllLoadedOnly(testInputs, testTargets)
 
@@ -310,15 +305,13 @@ func main() {
 		fmt.Printf("%-14s %-10s %-12s %.2f\n", r.ModelName, r.TypeName, r.Duration.Truncate(time.Millisecond), r.Score)
 	}
 
-	gpuOn = true
-
-	runAllLoadedOnly(testInputs, testTargets)
+	/*runAllLoadedOnly(testInputs, testTargets)
 
 	fmt.Println("\n📦 Reloaded Benchmark Results (Loaded from JSON):")
 	fmt.Printf("%-14s %-10s %-12s %s\n", "Model", "Type", "Time", "ADHD Score")
 	for _, r := range loadedResults {
 		fmt.Printf("%-14s %-10s %-12s %.2f\n", r.ModelName, r.TypeName, r.Duration.Truncate(time.Millisecond), r.Score)
-	}
+	}*/
 }
 
 // 🔁 Launch jobs for every T and model combination
@@ -381,6 +374,7 @@ func trainAndEvaluate[T paragon.Numeric](
 	layers := []struct{ Width, Height int }{
 		{28, 28}, {16, 16}, {10, 1},
 	}
+
 	acts := []string{"leaky_relu", "leaky_relu", "softmax"}
 	full := []bool{true, false, true}
 	nn := paragon.NewNetwork[T](layers, acts, full)
@@ -405,6 +399,13 @@ func trainAndEvaluate[T paragon.Numeric](
 			return 1
 		}
 	}
+
+	if gpuOn {
+		nn.WebGPUNative = true
+		nn.InitializeOptimizedGPU()
+		defer nn.CleanupOptimizedGPU()
+	}
+
 	nn.Train(trainInputs, trainTargets, numEpochs, learnRate, true, clipUpper, clipLower)
 
 	// Evaluate trained model (inference timing)
