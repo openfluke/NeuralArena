@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -37,7 +39,278 @@ var (
 	gpuOn         bool
 )
 
+func CompareCPUVsGPU() {
+	rand.Seed(42)
+	nn := paragon.NewNetwork[float32]([]struct{ Width, Height int }{
+		{28, 28}, // Input layer (MNIST-like)
+		{16, 16}, // Hidden layer
+		{10, 1},  // Output layer
+	}, []string{"leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true})
+
+	input := make([][]float64, 28)
+	for i := range input {
+		input[i] = make([]float64, 28)
+		for j := range input[i] {
+			input[i][j] = rand.Float64()
+		}
+	}
+
+	const iterations = 100
+	var cpuDuration, gpuDuration time.Duration
+
+	nn.WebGPUNative = false
+	for i := 0; i < iterations; i++ {
+		start := time.Now()
+		nn.Forward(input)
+		cpuDuration += time.Since(start)
+	}
+	cpuOut := nn.GetOutput()
+
+	nn.WebGPUNative = true
+	nn.BuildGPUKernels()
+	for i := 0; i < iterations; i++ {
+		start := time.Now()
+		nn.Forward(input)
+		gpuDuration += time.Since(start)
+	}
+	gpuOut := nn.GetOutput()
+
+	fmt.Printf("Average CPU Forward Pass (%d iterations): %v\n", iterations, cpuDuration/time.Duration(iterations))
+	fmt.Printf("Average GPU Forward Pass (%d iterations): %v\n", iterations, gpuDuration/time.Duration(iterations))
+
+	if len(cpuOut) != len(gpuOut) {
+		fmt.Printf("Output length mismatch: CPU=%d, GPU=%d\n", len(cpuOut), len(gpuOut))
+		return
+	}
+	mismatch := false
+	for i := range cpuOut {
+		if math.Abs(cpuOut[i]-gpuOut[i]) > 1e-5 {
+			fmt.Printf("Mismatch at index %d: CPU=%f, GPU=%f\n", i, cpuOut[i], gpuOut[i])
+			mismatch = true
+		}
+	}
+	if !mismatch {
+		fmt.Println("CPU and GPU outputs match within tolerance (1e-5)")
+	}
+	fmt.Printf("CPU Output: %v\n", cpuOut)
+	fmt.Printf("GPU Output: %v\n", gpuOut)
+}
+
+// Add this function to your test file to verify GPU is working
+func TestGPUPerformance() {
+	fmt.Println("\n=== GPU Performance Test ===")
+
+	// Create a network
+	nn := paragon.NewNetwork[float32]([]struct{ Width, Height int }{
+		{28, 28}, // Input
+		{16, 16}, // Hidden
+		{10, 1},  // Output
+	}, []string{"leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true})
+
+	// Load the model
+	if err := nn.LoadJSON("model_Standard_float32.json"); err != nil {
+		fmt.Printf("Failed to load model: %v\n", err)
+		return
+	}
+
+	// Create test input
+	input := make([][]float64, 28)
+	for i := range input {
+		input[i] = make([]float64, 28)
+		for j := range input[i] {
+			input[i][j] = rand.Float64()
+		}
+	}
+
+	// Test CPU performance
+	nn.WebGPUNative = false
+	nn.Debug = true // Enable debug output
+
+	start := time.Now()
+	for i := 0; i < 100; i++ {
+		nn.Forward(input)
+	}
+	cpuTime := time.Since(start)
+	cpuOutput := nn.GetOutput()
+
+	fmt.Printf("\nCPU: 100 iterations in %v (%.2f ms/iter)\n",
+		cpuTime, float64(cpuTime.Milliseconds())/100)
+
+	// Test GPU performance
+	nn.WebGPUNative = true
+	nn.BuildGPUKernels()
+
+	// Verify GPU setup
+	if err := nn.VerifyGPUSetup(); err != nil {
+		fmt.Printf("GPU setup verification failed: %v\n", err)
+		return
+	}
+
+	nn.Debug = false // Disable debug for timing
+
+	start = time.Now()
+	for i := 0; i < 100; i++ {
+		nn.Forward(input)
+	}
+	gpuTime := time.Since(start)
+	gpuOutput := nn.GetOutput()
+
+	fmt.Printf("GPU: 100 iterations in %v (%.2f ms/iter)\n",
+		gpuTime, float64(gpuTime.Milliseconds())/100)
+
+	// Compare outputs
+	maxDiff := 0.0
+	for i := range cpuOutput {
+		diff := math.Abs(cpuOutput[i] - gpuOutput[i])
+		if diff > maxDiff {
+			maxDiff = diff
+		}
+	}
+
+	fmt.Printf("\nMax difference between CPU and GPU: %e\n", maxDiff)
+	fmt.Printf("Speedup: %.2fx\n", float64(cpuTime)/float64(gpuTime))
+
+	// Test with batch
+	fmt.Println("\n--- Batch Test (1000 samples) ---")
+
+	// CPU batch
+	nn.WebGPUNative = false
+	start = time.Now()
+	for i := 0; i < 1000; i++ {
+		nn.Forward(input)
+	}
+	cpuBatchTime := time.Since(start)
+
+	// GPU batch
+	nn.WebGPUNative = true
+	start = time.Now()
+	for i := 0; i < 1000; i++ {
+		nn.Forward(input)
+	}
+	gpuBatchTime := time.Since(start)
+
+	fmt.Printf("CPU Batch: %v (%.2f ms/sample)\n",
+		cpuBatchTime, float64(cpuBatchTime.Milliseconds())/1000)
+	fmt.Printf("GPU Batch: %v (%.2f ms/sample)\n",
+		gpuBatchTime, float64(gpuBatchTime.Milliseconds())/1000)
+	fmt.Printf("Batch Speedup: %.2fx\n", float64(cpuBatchTime)/float64(gpuBatchTime))
+}
+
+func TestGPUScaling() {
+	fmt.Println("\n=== GPU Scaling Test ===")
+
+	sizes := []struct {
+		name   string
+		layers []struct{ Width, Height int }
+	}{
+		{"Tiny (784→256→10)", []struct{ Width, Height int }{{28, 28}, {16, 16}, {10, 1}}},
+		{"Small (784→512→10)", []struct{ Width, Height int }{{28, 28}, {32, 16}, {10, 1}}},
+		{"Medium (784→1024→10)", []struct{ Width, Height int }{{28, 28}, {32, 32}, {10, 1}}},
+		{"Large (784→2048→10)", []struct{ Width, Height int }{{28, 28}, {64, 32}, {10, 1}}},
+	}
+
+	input := make([][]float64, 28)
+	for i := range input {
+		input[i] = make([]float64, 28)
+		for j := range input[i] {
+			input[i][j] = rand.Float64()
+		}
+	}
+
+	for _, size := range sizes {
+		fmt.Printf("\n%s:\n", size.name)
+
+		nn := paragon.NewNetwork[float32](
+			size.layers,
+			[]string{"leaky_relu", "leaky_relu", "softmax"},
+			[]bool{true, true, true},
+		)
+
+		// CPU timing
+		start := time.Now()
+		for i := 0; i < 100; i++ {
+			nn.Forward(input)
+		}
+		cpuTime := time.Since(start)
+
+		// GPU timing
+		nn.WebGPUNative = true
+		nn.BuildGPUKernels()
+
+		// Warm up
+		nn.Forward(input)
+
+		start = time.Now()
+		for i := 0; i < 100; i++ {
+			nn.Forward(input)
+		}
+		gpuTime := time.Since(start)
+
+		speedup := float64(cpuTime) / float64(gpuTime)
+		fmt.Printf("  CPU: %.2f ms/iter\n", float64(cpuTime.Microseconds())/100/1000)
+		fmt.Printf("  GPU: %.2f ms/iter\n", float64(gpuTime.Microseconds())/100/1000)
+		fmt.Printf("  Speedup: %.2fx %s\n", speedup,
+			map[bool]string{true: "✓", false: "✗"}[speedup > 1.0])
+	}
+}
+
+// Test batch processing (process multiple samples in one GPU call)
+func TestBatchProcessing() {
+	fmt.Println("\n=== Batch Processing Test ===")
+
+	nn := paragon.NewNetwork[float32]([]struct{ Width, Height int }{
+		{28, 28}, {32, 32}, {10, 1},
+	}, []string{"leaky_relu", "leaky_relu", "softmax"}, []bool{true, true, true})
+
+	// Create batch of inputs
+	batchSizes := []int{1, 10, 50, 100}
+
+	for _, batchSize := range batchSizes {
+		fmt.Printf("\nBatch size %d:\n", batchSize)
+
+		// Create batch
+		inputs := make([][][]float64, batchSize)
+		for b := 0; b < batchSize; b++ {
+			inputs[b] = make([][]float64, 28)
+			for i := 0; i < 28; i++ {
+				inputs[b][i] = make([]float64, 28)
+				for j := 0; j < 28; j++ {
+					inputs[b][i][j] = rand.Float64()
+				}
+			}
+		}
+
+		// CPU timing
+		nn.WebGPUNative = false
+		start := time.Now()
+		for _, input := range inputs {
+			nn.Forward(input)
+		}
+		cpuTime := time.Since(start)
+
+		// GPU timing
+		nn.WebGPUNative = true
+		nn.BuildGPUKernels()
+		start = time.Now()
+		for _, input := range inputs {
+			nn.Forward(input)
+		}
+		gpuTime := time.Since(start)
+
+		fmt.Printf("  CPU total: %v (%.3f ms/sample)\n",
+			cpuTime, float64(cpuTime.Microseconds())/float64(batchSize)/1000)
+		fmt.Printf("  GPU total: %v (%.3f ms/sample)\n",
+			gpuTime, float64(gpuTime.Microseconds())/float64(batchSize)/1000)
+		fmt.Printf("  Speedup: %.2fx\n", float64(cpuTime)/float64(gpuTime))
+	}
+}
+
 func main() {
+
+	CompareCPUVsGPU()
+	TestGPUPerformance()
+
+	return
 	// --- Load MNIST ---
 	if err := ensureMNISTDownloads(mnistDir); err != nil {
 		log.Fatalf("MNIST download error: %v", err)
@@ -244,10 +517,7 @@ func evalLoadedHelper[T paragon.Numeric](
 	}
 	if gpuOn {
 		nn.WebGPUNative = true
-		if err := nn.InitWebGPU(); err != nil {
-			panic(err)
-		}
-		defer nn.ReleaseWebGPU()
+		nn.BuildGPUKernels()
 	}
 	var expected, predicted []float64
 	start := time.Now()
