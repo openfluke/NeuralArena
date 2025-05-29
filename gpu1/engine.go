@@ -5,113 +5,198 @@ import (
 	"log"
 	"math"
 	"math/rand"
-	"time"
-
 	"paragon"
+	"time"
 )
+
+const iterations = 1000
+const tolerance = 1e-5
+
+// Simplified layer structure: same for all tests
+var layers = []struct{ Width, Height int }{
+	{28, 28}, // Input layer (MNIST)
+	{32, 32}, // First hidden layer
+	{32, 32}, // Second hidden layer
+	{10, 1},  // Output layer
+}
+
+// Activation functions to test
+var actsToTest = []string{
+	"linear",     // Linear (identity)
+	"relu",       // ReLU
+	"leaky_relu", // Leaky ReLU
+	"elu",        // ELU
+	"swish",      // Swish/SiLU
+	"gelu",       // GELU
+	"tanh",       // Hyperbolic tangent
+	"softmax",    // Softmax
+}
+
+var fc = []bool{true, true, true, true}
 
 const mnistDir = "./mnist_data"
 
-func crossEntropyLoss(pred, target []float32) float32 {
-	loss := float32(0)
-	for i := range pred {
-		p := float32(math.Max(float64(pred[i]), 1e-7))
-		t := target[i]
-		loss -= t * float32(math.Log(float64(p)))
-	}
-	return loss
-}
-
-func oneHot(idx, size int) []float32 {
-	v := make([]float32, size)
-	v[idx] = 1.0
-	return v
+type ActivationTestResult struct {
+	Type       string
+	Activation string
+	CPUTime    time.Duration
+	GPUTime    time.Duration
+	Speedup    float64
+	Mismatch   bool
 }
 
 func main() {
 	rand.Seed(42)
 
-	// --- Download and Load MNIST ---
+	// Load MNIST data
 	if err := ensureMNISTDownloads(mnistDir); err != nil {
 		log.Fatalf("MNIST download error: %v", err)
 	}
+
 	testInputs, _, err := loadMNISTData(mnistDir, false)
 	if err != nil {
 		log.Fatalf("Failed to load test data: %v", err)
 	}
 
-	trainInputs, trainLabels, err := loadMNISTData(mnistDir, true)
-	_ = trainLabels
+	fmt.Printf("Loaded MNIST: %d test samples\n", len(testInputs))
 
-	if err != nil {
-		log.Fatalf("Failed to load train data: %v", err)
-	}
+	// Collect results for all types and activations
+	results := []ActivationTestResult{}
+	types := []string{"float32", "int32", "uint32"}
 
-	fmt.Printf("Loaded MNIST: %d train / %d test samples\n", len(trainInputs), len(testInputs))
+	for _, typeName := range types {
+		fmt.Printf("\n=== Testing %s ===\n", typeName)
 
-	// --- Model Definition ---
-	layers := []struct{ Width, Height int }{
-		{28, 28},
-		{32, 32},
-		{32, 32},
-		{10, 1},
-	}
-	acts := []string{"leaky_relu", "leaky_relu", "leaky_relu", "softmax"}
-	fc := []bool{true, true, true, true}
-
-	const iterations = 1000
-
-	// ======= Build model =======
-	nn := paragon.NewNetwork[float32](layers, acts, fc)
-
-	// ======= CPU forward =======
-	nn.WebGPUNative = false
-	fmt.Println("\nRunning CPU forward pass benchmark...")
-	cpuStart := time.Now()
-	for i := 0; i < iterations; i++ {
-		nn.Forward(testInputs[0])
-	}
-	cpuDuration := time.Since(cpuStart)
-	cpuOut := nn.GetOutput()
-
-	// ======= GPU forward =======
-	nn.WebGPUNative = true
-	if err := nn.InitializeOptimizedGPU(); err != nil {
-		log.Fatalf("GPU init failed: %v", err)
-	}
-	defer nn.CleanupOptimizedGPU()
-
-	// Warm-up
-	nn.Forward(testInputs[0])
-
-	fmt.Println("Running GPU forward pass benchmark...")
-	gpuStart := time.Now()
-	for i := 0; i < iterations; i++ {
-		nn.Forward(testInputs[0])
-	}
-	gpuDuration := time.Since(gpuStart)
-	gpuOut := nn.GetOutput()
-
-	// ======= Output =======
-	fmt.Printf("\n==== Timing Summary (%d iterations) ====\n", iterations)
-	fmt.Printf("CPU total time: %v\n", cpuDuration)
-	fmt.Printf("GPU total time: %v\n", gpuDuration)
-	fmt.Printf("Average CPU Forward Pass: %v\n", cpuDuration/time.Duration(iterations))
-	fmt.Printf("Average GPU Forward Pass: %v\n", gpuDuration/time.Duration(iterations))
-	if gpuDuration > 0 {
-		fmt.Printf("GPU is %.2fx faster than CPU (per forward)\n", float64(cpuDuration)/float64(gpuDuration))
-	}
-
-	// Compare outputs
-	mismatch := false
-	for i := range cpuOut {
-		if math.Abs(cpuOut[i]-gpuOut[i]) > 1e-5 {
-			fmt.Printf("Mismatch at index %d: CPU=%f, GPU=%f\n", i, cpuOut[i], gpuOut[i])
-			mismatch = true
+		var actResults []ActivationTestResult
+		switch typeName {
+		case "float32":
+			actResults = benchmarkTypeWithActivations[float32](typeName, testInputs[0])
+		case "int32":
+			actResults = benchmarkTypeWithActivations[int32](typeName, testInputs[0])
+		case "uint32":
+			actResults = benchmarkTypeWithActivations[uint32](typeName, testInputs[0])
 		}
-	}
-	if !mismatch {
-		fmt.Println("CPU and GPU outputs match within tolerance (1e-5)")
+		results = append(results, actResults...)
 	}
 
+	// Print comprehensive summary
+	fmt.Printf("\n==== Activation Function Performance (%d iterations) ====\n", iterations)
+	fmt.Printf("%-10s | %-12s | %-12s | %-12s | %-10s | Match?\n", "Type", "Activation", "CPU Time", "GPU Time", "Speedup")
+	fmt.Println("-----------------------------------------------------------------------")
+
+	for _, r := range results {
+		match := "✅"
+		if r.Mismatch {
+			match = "❌"
+		}
+		fmt.Printf("%-10s | %-12s | %-12v | %-12v | %-9.2fx | %s\n",
+			r.Type, r.Activation, r.CPUTime, r.GPUTime, r.Speedup, match)
+	}
+
+	// Print activation compatibility summary
+	fmt.Printf("\n==== Activation Function Compatibility ====\n")
+	fmt.Printf("%-12s | %-8s | %-8s | %-8s\n", "Activation", "float32", "int32", "uint32")
+	fmt.Println("-------------------------------------------")
+
+	for _, activation := range actsToTest {
+		fmt.Printf("%-12s | ", activation)
+		for _, typeName := range types {
+			// Find the result for this type and activation
+			found := false
+			for _, r := range results {
+				if r.Type == typeName && r.Activation == activation {
+					status := "✅"
+					if r.Mismatch {
+						status = "❌"
+					}
+					fmt.Printf("%-8s | ", status)
+					found = true
+					break
+				}
+			}
+			if !found {
+				fmt.Printf("%-8s | ", "N/A")
+			}
+		}
+		fmt.Println()
+	}
+}
+
+func benchmarkTypeWithActivations[T paragon.Numeric](typeName string, input [][]float64) []ActivationTestResult {
+	activationResults := []ActivationTestResult{}
+
+	fmt.Printf("Testing activation functions for %s...\n", typeName)
+
+	for _, activation := range actsToTest {
+		// Define activation functions: use the test activation for hidden layers
+		acts := []string{"linear", activation, activation, "softmax"}
+
+		nn := paragon.NewNetwork[T](layers, acts, fc)
+
+		// CPU test
+		nn.WebGPUNative = false
+		cpuStart := time.Now()
+		for j := 0; j < iterations; j++ {
+			nn.Forward(input)
+		}
+		cpuDuration := time.Since(cpuStart)
+		cpuOut := nn.GetOutput()
+
+		// GPU test
+		nn.WebGPUNative = true
+		err := nn.InitializeOptimizedGPU()
+		if err != nil {
+			fmt.Printf("[%s/%s] GPU unsupported: %v\n", typeName, activation, err)
+			activationResults = append(activationResults, ActivationTestResult{
+				Type:       typeName,
+				Activation: activation,
+				CPUTime:    cpuDuration,
+				GPUTime:    0,
+				Speedup:    0,
+				Mismatch:   true,
+			})
+			continue
+		}
+
+		// Warm-up
+		nn.Forward(input)
+		gpuStart := time.Now()
+		for j := 0; j < iterations; j++ {
+			nn.Forward(input)
+		}
+		gpuDuration := time.Since(gpuStart)
+		gpuOut := nn.GetOutput()
+
+		nn.CleanupOptimizedGPU()
+
+		// Compare outputs
+		mismatch := false
+		for k := range cpuOut {
+			if math.Abs(cpuOut[k]-gpuOut[k]) > tolerance {
+				fmt.Printf("[%s/%s] Mismatch at index %d: CPU=%.6f GPU=%.6f\n",
+					typeName, activation, k, cpuOut[k], gpuOut[k])
+				mismatch = true
+				break
+			}
+		}
+
+		speedup := 0.0
+		if gpuDuration > 0 {
+			speedup = float64(cpuDuration) / float64(gpuDuration)
+		}
+
+		activationResults = append(activationResults, ActivationTestResult{
+			Type:       typeName,
+			Activation: activation,
+			CPUTime:    cpuDuration,
+			GPUTime:    gpuDuration,
+			Speedup:    speedup,
+			Mismatch:   mismatch,
+		})
+
+		fmt.Printf("  %s: CPU=%v GPU=%v Speedup=%.2fx Match=%t\n",
+			activation, cpuDuration, gpuDuration, speedup, !mismatch)
+	}
+
+	return activationResults
 }
