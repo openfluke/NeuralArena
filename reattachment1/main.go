@@ -17,11 +17,12 @@ func main() {
 
 	// File paths
 	networkFile := "original_network.json"
+	modifiedNetworkFile := "modified_network.json"
 	microNetworkFile := "micro_network.json"
 
-	// Step 1: Create or load original network
-	fmt.Println("\n🏗️  Step 1: Setting up original network...")
-	network, isLoaded := setupNetwork(networkFile)
+	// Step 1: Create or load networks
+	fmt.Println("\n🏗️  Step 1: Setting up networks...")
+	network, originalNet, isLoaded := setupNetworks(networkFile, modifiedNetworkFile)
 
 	// Step 2: Set test parameters
 	testInput := [][]float64{{0.1, 0.5, 0.9}}
@@ -31,16 +32,26 @@ func main() {
 	fmt.Printf("📊 Test input: %v\n", testInput[0])
 	fmt.Printf("🎯 Checkpoint layer: %d\n", checkpointLayer)
 
-	// Step 3: Extract or load micro network
+	// Step 3: Extract or load micro network from ORIGINAL network
 	fmt.Println("\n🔬 Step 2: Setting up micro network...")
-	microNet, _ := setupMicroNetwork(network, checkpointLayer, microNetworkFile, isLoaded)
+	var microNet *paragon.MicroNetwork[float32]
+	if isLoaded && originalNet != nil {
+		fmt.Println("🔬 Extracting micro network from preserved original network...")
+		microNet = extractNewMicroNetwork(originalNet, checkpointLayer)
+	} else {
+		fmt.Println("🔬 Extracting micro network from current network...")
+		microNet = extractNewMicroNetwork(network, checkpointLayer)
+	}
 
 	// Step 4: THE 3-WAY VERIFICATION with timing
 	fmt.Println("\n🧪 Step 3: Running 3-way verification...")
+
+	if isLoaded && originalNet != nil {
+		fmt.Println("🔍 Testing compatibility between original structure and modified network...")
+	}
+
 	startTime := time.Now()
-
 	isEquivalent, outputs := microNet.VerifyThreeWayEquivalence(network, testInput, tolerance)
-
 	verificationTime := time.Since(startTime)
 	fmt.Printf("⏱️  Verification completed in: %v\n", verificationTime)
 
@@ -68,12 +79,21 @@ func main() {
 
 	if isEquivalent {
 		fmt.Println("\n🎉 ALL THREE OUTPUTS MATCH PERFECTLY!")
-		fmt.Println("✅ Micro network is functionally equivalent to main network")
+		if isLoaded && originalNet != nil {
+			fmt.Println("✅ Modified network maintains compatibility with original structure")
+		} else {
+			fmt.Println("✅ Micro network is functionally equivalent to main network")
+		}
 	} else {
 		fmt.Println("\n⚠️  OUTPUTS DON'T MATCH - Investigation needed")
+		if isLoaded && originalNet != nil {
+			fmt.Println("⚠️  Modified network is incompatible with original structure!")
+			fmt.Println("💡 This could indicate surgery corruption or incompatible changes")
+		}
+		return // Skip surgery if verification fails
 	}
 
-	// Step 5: Test micro network normal vs checkpoint difference with timing
+	// Step 5: Test micro network normal vs checkpoint difference
 	fmt.Println("\n🔬 Step 4: Testing micro network normal vs checkpoint...")
 	startTime = time.Now()
 
@@ -93,16 +113,21 @@ func main() {
 		fmt.Println("⚠️  Micro network paths are identical (unexpected)")
 	}
 
-	// Step 6: Demonstrate complete surgery with timing
-	fmt.Println("\n🚀 Step 5: Demonstrating complete surgery...")
-	_ = demonstrateCompleteSurgery(network, testInput, checkpointLayer)
+	// Step 6: Demonstrate complete surgery (only on unmodified networks)
+	if !isLoaded {
+		fmt.Println("\n🚀 Step 5: Demonstrating complete surgery...")
+		resultMicroNet := demonstrateCompleteSurgery(network, testInput, checkpointLayer)
 
-	// Step 7: Always save networks after surgery (they may have been modified)
-	fmt.Println("\n💾 Step 6: Saving networks after surgery...")
-
-	// Extract fresh micro network from potentially modified original network
-	freshMicroNet := network.ExtractMicroNetwork(checkpointLayer)
-	saveNetworks(network, freshMicroNet, networkFile, microNetworkFile)
+		// Step 7: Save all networks after surgery
+		fmt.Println("\n💾 Step 6: Saving networks after surgery...")
+		if resultMicroNet != nil {
+			saveAllNetworks(network, network, resultMicroNet, networkFile, modifiedNetworkFile, microNetworkFile)
+		}
+	} else {
+		fmt.Println("\n🚀 Step 5: Surgery skipped on loaded modified network")
+		fmt.Println("💡 Surgery is only performed on fresh networks to maintain verification integrity")
+		fmt.Println("💡 Delete saved files to start fresh and perform new surgery")
+	}
 
 	// Step 8: Performance summary
 	fmt.Println("\n📊 Performance Summary:")
@@ -112,69 +137,52 @@ func main() {
 	fmt.Println("\n✅ Complete verification test finished!")
 }
 
-func setupNetwork(networkFile string) (*paragon.Network[float32], bool) {
-	if fileExists(networkFile) {
-		fmt.Printf("📁 Loading existing network from %s...\n", networkFile)
-		startTime := time.Now()
+func setupNetworks(networkFile, modifiedNetworkFile string) (*paragon.Network[float32], *paragon.Network[float32], bool) {
+	if fileExists(modifiedNetworkFile) {
+		// Load modified network as primary, original as backup
+		fmt.Printf("📁 Loading modified network from %s...\n", modifiedNetworkFile)
+		modifiedNet := loadNetworkFromFile(modifiedNetworkFile)
 
-		networkAny, err := paragon.LoadNamedNetworkFromJSONFile(networkFile)
-		if err != nil {
-			log.Printf("Failed to load network: %v", err)
-			fmt.Println("🏗️  Creating new network instead...")
-			return createNewNetwork(), false
+		var originalNet *paragon.Network[float32]
+		if fileExists(networkFile) {
+			fmt.Printf("📁 Loading original network from %s...\n", networkFile)
+			originalNet = loadNetworkFromFile(networkFile)
 		}
 
-		network, ok := networkAny.(*paragon.Network[float32])
-		if !ok {
-			log.Printf("Unexpected network type: %T", networkAny)
-			fmt.Println("🏗️  Creating new network instead...")
-			return createNewNetwork(), false
-		}
-
-		loadTime := time.Since(startTime)
-		fmt.Printf("✅ Network loaded successfully in %v\n", loadTime)
-		return network, true
+		return modifiedNet, originalNet, true
+	} else if fileExists(networkFile) {
+		// Load single network (could be original or modified)
+		fmt.Printf("📁 Loading network from %s...\n", networkFile)
+		network := loadNetworkFromFile(networkFile)
+		return network, nil, true
 	} else {
+		// Create fresh network
 		fmt.Println("🏗️  Creating new network...")
-		return createNewNetwork(), false
+		network := createNewNetwork()
+		return network, nil, false
 	}
 }
 
-func setupMicroNetwork(originalNet *paragon.Network[float32], checkpointLayer int, microFile string, originalLoaded bool) (*paragon.MicroNetwork[float32], bool) {
-	if originalLoaded && fileExists(microFile) {
-		fmt.Printf("📁 Loading existing micro network from %s...\n", microFile)
-		startTime := time.Now()
+func loadNetworkFromFile(filename string) *paragon.Network[float32] {
+	startTime := time.Now()
 
-		// Load micro network
-		microNetworkAny, err := paragon.LoadNamedNetworkFromJSONFile(microFile)
-		if err != nil {
-			log.Printf("Failed to load micro network: %v", err)
-			fmt.Println("🔬 Extracting new micro network instead...")
-			return extractNewMicroNetwork(originalNet, checkpointLayer), false
-		}
-
-		microNetwork, ok := microNetworkAny.(*paragon.Network[float32])
-		if !ok {
-			log.Printf("Unexpected micro network type: %T", microNetworkAny)
-			fmt.Println("🔬 Extracting new micro network instead...")
-			return extractNewMicroNetwork(originalNet, checkpointLayer), false
-		}
-
-		loadTime := time.Since(startTime)
-		fmt.Printf("✅ Micro network loaded successfully in %v\n", loadTime)
-
-		// Reconstruct MicroNetwork wrapper
-		microNet := &paragon.MicroNetwork[float32]{
-			Network:       microNetwork,
-			SourceLayers:  []int{0, checkpointLayer, originalNet.OutputLayer},
-			CheckpointIdx: 1,
-		}
-
-		return microNet, true
-	} else {
-		fmt.Println("🔬 Extracting new micro network...")
-		return extractNewMicroNetwork(originalNet, checkpointLayer), false
+	networkAny, err := paragon.LoadNamedNetworkFromJSONFile(filename)
+	if err != nil {
+		log.Printf("Failed to load network from %s: %v", filename, err)
+		fmt.Println("🏗️  Creating new network instead...")
+		return createNewNetwork()
 	}
+
+	network, ok := networkAny.(*paragon.Network[float32])
+	if !ok {
+		log.Printf("Unexpected network type from %s: %T", filename, networkAny)
+		fmt.Println("🏗️  Creating new network instead...")
+		return createNewNetwork()
+	}
+
+	loadTime := time.Since(startTime)
+	fmt.Printf("✅ Network loaded successfully in %v\n", loadTime)
+	return network
 }
 
 func createNewNetwork() *paragon.Network[float32] {
@@ -214,7 +222,6 @@ func demonstrateCompleteSurgery(network *paragon.Network[float32], testInput [][
 		{{0.8, 0.1, 0.6}},
 	}
 
-	// Get original performance
 	startTime := time.Now()
 	network.Forward(testInput)
 	originalOutput := network.GetOutput()
@@ -223,21 +230,30 @@ func demonstrateCompleteSurgery(network *paragon.Network[float32], testInput [][
 	fmt.Printf("📊 Original network output: [%.6f, %.6f] (computed in %v)\n",
 		originalOutput[0], originalOutput[1], forwardTime)
 
-	// Perform complete surgery with timing
 	fmt.Println("🏥 Performing complete network surgery...")
 	startTime = time.Now()
 
 	tolerance := 1e-6
 	microNet, err := network.NetworkSurgery(checkpointLayer, testInputs, tolerance)
-	if err != nil {
-		log.Printf("Surgery failed: %v", err)
-
-	}
 
 	surgeryTime := time.Since(startTime)
 	fmt.Printf("⏱️  Surgery completed in: %v\n", surgeryTime)
 
-	// Test final result
+	if err != nil {
+		log.Printf("Surgery failed: %v", err)
+		fmt.Println("⚠️  Surgery failed - skipping post-surgery analysis")
+
+		startTime = time.Now()
+		network.Forward(testInput)
+		finalOutput := network.GetOutput()
+		finalForwardTime := time.Since(startTime)
+
+		fmt.Printf("📊 Post-surgery output: [%.6f, %.6f] (computed in %v)\n",
+			finalOutput[0], finalOutput[1], finalForwardTime)
+
+		return nil
+	}
+
 	startTime = time.Now()
 	network.Forward(testInput)
 	finalOutput := network.GetOutput()
@@ -245,9 +261,11 @@ func demonstrateCompleteSurgery(network *paragon.Network[float32], testInput [][
 
 	fmt.Printf("📊 Post-surgery output: [%.6f, %.6f] (computed in %v)\n",
 		finalOutput[0], finalOutput[1], finalForwardTime)
-	fmt.Printf("🏆 Surgery complete! Micro network has %d layers\n", len(microNet.Network.Layers))
 
-	// Show the difference
+	if microNet != nil && microNet.Network != nil {
+		fmt.Printf("🏆 Surgery complete! Micro network has %d layers\n", len(microNet.Network.Layers))
+	}
+
 	outputDiff := abs(originalOutput[0]-finalOutput[0]) + abs(originalOutput[1]-finalOutput[1])
 	if outputDiff < 1e-6 {
 		fmt.Println("✅ Surgery preserved original functionality perfectly")
@@ -255,28 +273,37 @@ func demonstrateCompleteSurgery(network *paragon.Network[float32], testInput [][
 		fmt.Printf("🔧 Surgery modified network (total output change: %.8f)\n", outputDiff)
 	}
 
-	// Performance comparison
 	fmt.Printf("⏱️  Performance: Original forward (%v) vs Post-surgery forward (%v)\n",
 		forwardTime, finalForwardTime)
 
 	return microNet
 }
 
-func saveNetworks(network *paragon.Network[float32], microNet *paragon.MicroNetwork[float32], networkFile, microFile string) {
+func saveAllNetworks(originalNet, modifiedNet *paragon.Network[float32], microNet *paragon.MicroNetwork[float32],
+	originalFile, modifiedFile, microFile string) {
 	startTime := time.Now()
 
-	// Save original network
-	if err := network.SaveJSON(networkFile); err != nil {
-		log.Printf("Failed to save network: %v", err)
+	// Save original network (pre-surgery)
+	if err := originalNet.SaveJSON(originalFile); err != nil {
+		log.Printf("Failed to save original network: %v", err)
 	} else {
-		fmt.Printf("💾 Original network saved to %s\n", networkFile)
+		fmt.Printf("💾 Original network saved to %s\n", originalFile)
+	}
+
+	// Save modified network (post-surgery)
+	if err := modifiedNet.SaveJSON(modifiedFile); err != nil {
+		log.Printf("Failed to save modified network: %v", err)
+	} else {
+		fmt.Printf("💾 Modified network saved to %s\n", modifiedFile)
 	}
 
 	// Save micro network
-	if err := microNet.Network.SaveJSON(microFile); err != nil {
-		log.Printf("Failed to save micro network: %v", err)
-	} else {
-		fmt.Printf("💾 Micro network saved to %s\n", microFile)
+	if microNet != nil && microNet.Network != nil {
+		if err := microNet.Network.SaveJSON(microFile); err != nil {
+			log.Printf("Failed to save micro network: %v", err)
+		} else {
+			fmt.Printf("💾 Micro network saved to %s\n", microFile)
+		}
 	}
 
 	saveTime := time.Since(startTime)
