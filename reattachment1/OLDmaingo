@@ -1,0 +1,404 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"math/rand"
+
+	"paragon" // Replace with actual import path
+)
+
+func main() {
+	// Set random seed for reproducibility
+	rand.Seed(42)
+
+	fmt.Println("=== Paragon Neural Network Surgery Test ===")
+
+	// Step 1: Create original large network
+	fmt.Println("\n🏗️  Step 1: Creating original 4-layer network...")
+	originalNetwork := createOriginalNetwork()
+
+	// Step 2: Run forward pass and create checkpoint
+	fmt.Println("\n🔬 Step 2: Running forward pass and creating checkpoint...")
+	testInputs := getTestInputs()
+	checkpointLayer := 2
+
+	// Forward pass on original network
+	originalNetwork.Forward(testInputs[0])
+	originalOutputs := originalNetwork.GetOutput()
+	fmt.Printf("✅ Original network output: [%.6f, %.6f]\n", originalOutputs[0], originalOutputs[1])
+
+	// Create checkpoint at layer 2
+	checkpointState := originalNetwork.GetLayerState(checkpointLayer)
+	fmt.Printf("📸 Checkpoint created at layer %d: %v\n", checkpointLayer, flattenState(checkpointState))
+
+	// Save checkpoint
+	if err := originalNetwork.SaveLayerState(checkpointLayer, "checkpoint.json"); err != nil {
+		log.Fatalf("Failed to save checkpoint: %v", err)
+	}
+
+	// Step 3: Create micro network (input → checkpoint layer → output)
+	fmt.Println("\n🔬 Step 3: Creating micro network from checkpoint...")
+	microNetwork := createMicroNetwork(originalNetwork, checkpointLayer)
+
+	// Step 4: Verify micro network produces same outputs
+	fmt.Println("\n🧪 Step 4: Verifying micro network matches original...")
+	verifyMicroNetwork(microNetwork, originalNetwork, testInputs[0], checkpointState)
+
+	// Step 5: Test adding layers to micro network
+	fmt.Println("\n🚀 Step 5: Testing micro network improvements...")
+	improvedMicro := testMicroNetworkImprovements(microNetwork, testInputs)
+
+	// Step 6: Reattach best micro network back to original
+	fmt.Println("\n🔧 Step 6: Reattaching best micro to original network...")
+	reattachImprovedMicro(originalNetwork, improvedMicro, checkpointLayer, testInputs[0], checkpointState)
+
+	fmt.Println("\n✅ Neural network surgery test complete!")
+}
+
+func createOriginalNetwork() *paragon.Network[float32] {
+	// Create a 4-layer network: 3 → 8 → 6 → 2
+	layerSizes := []struct{ Width, Height int }{
+		{3, 1}, // Input layer: 3 inputs
+		{8, 1}, // Hidden layer 1: 8 neurons
+		{6, 1}, // Hidden layer 2: 6 neurons (checkpoint layer)
+		{2, 1}, // Output layer: 2 outputs
+	}
+
+	activations := []string{"linear", "relu", "relu", "softmax"}
+	fullyConnected := []bool{false, true, true, true}
+
+	network := paragon.NewNetwork[float32](layerSizes, activations, fullyConnected)
+	network.Debug = true
+
+	fmt.Printf("✅ Created original network: %d → %d → %d → %d\n",
+		layerSizes[0].Width, layerSizes[1].Width, layerSizes[2].Width, layerSizes[3].Width)
+
+	return network
+}
+
+func createMicroNetwork(originalNetwork *paragon.Network[float32], checkpointLayer int) *paragon.Network[float32] {
+	// Create micro network: input → checkpoint layer → output
+	// Structure: 3 → 6 → 2 (skipping the middle hidden layer)
+
+	inputSize := originalNetwork.Layers[0]
+	checkpointSize := originalNetwork.Layers[checkpointLayer]
+	outputSize := originalNetwork.Layers[originalNetwork.OutputLayer]
+
+	microLayerSizes := []struct{ Width, Height int }{
+		{inputSize.Width, inputSize.Height},           // Input: 3 neurons
+		{checkpointSize.Width, checkpointSize.Height}, // Checkpoint layer: 6 neurons
+		{outputSize.Width, outputSize.Height},         // Output: 2 neurons
+	}
+
+	microActivations := []string{
+		originalNetwork.Layers[0].Neurons[0][0].Activation,                           // Input activation
+		originalNetwork.Layers[checkpointLayer].Neurons[0][0].Activation,             // Checkpoint activation
+		originalNetwork.Layers[originalNetwork.OutputLayer].Neurons[0][0].Activation, // Output activation
+	}
+
+	microFullyConnected := []bool{false, true, true}
+
+	microNetwork := paragon.NewNetwork[float32](microLayerSizes, microActivations, microFullyConnected)
+	microNetwork.Debug = true
+
+	// Copy weights from original network
+	// Copy input → checkpoint layer weights (layer 0 → layer 1 in micro, corresponds to layer 0 → layer 2 in original)
+	copyWeightsBetweenLayers(originalNetwork, 0, checkpointLayer, microNetwork, 0, 1)
+
+	// Copy checkpoint → output weights (layer 1 → layer 2 in micro, corresponds to layer 2 → layer 3 in original)
+	copyWeightsBetweenLayers(originalNetwork, checkpointLayer, originalNetwork.OutputLayer, microNetwork, 1, 2)
+
+	fmt.Printf("✅ Created micro network: %d → %d → %d\n",
+		microLayerSizes[0].Width, microLayerSizes[1].Width, microLayerSizes[2].Width)
+
+	return microNetwork
+}
+
+func copyWeightsBetweenLayers(srcNet *paragon.Network[float32], srcFromLayer, srcToLayer int,
+	dstNet *paragon.Network[float32], dstFromLayer, dstToLayer int) {
+
+	srcLayer := srcNet.Layers[srcToLayer]
+	dstLayer := &dstNet.Layers[dstToLayer]
+
+	fmt.Printf("🔗 Copying weights: src[%d→%d] to dst[%d→%d]\n",
+		srcFromLayer, srcToLayer, dstFromLayer, dstToLayer)
+
+	// Copy neuron biases and connection weights
+	for y := 0; y < srcLayer.Height && y < dstLayer.Height; y++ {
+		for x := 0; x < srcLayer.Width && x < dstLayer.Width; x++ {
+			srcNeuron := srcLayer.Neurons[y][x]
+			dstNeuron := dstLayer.Neurons[y][x]
+
+			// Copy bias
+			dstNeuron.Bias = srcNeuron.Bias
+
+			// Copy weights (need to adjust source layer indices)
+			if len(srcNeuron.Inputs) == len(dstNeuron.Inputs) {
+				for i, srcConn := range srcNeuron.Inputs {
+					dstNeuron.Inputs[i].Weight = srcConn.Weight
+					// Update source layer index for micro network
+					dstNeuron.Inputs[i].SourceLayer = dstFromLayer
+					dstNeuron.Inputs[i].SourceX = srcConn.SourceX
+					dstNeuron.Inputs[i].SourceY = srcConn.SourceY
+				}
+			}
+		}
+	}
+}
+
+func verifyMicroNetwork(microNetwork, originalNetwork *paragon.Network[float32],
+	input [][]float64, checkpointState [][]float64) {
+
+	// Test 1: Forward pass through micro network normally
+	microNetwork.Forward(input)
+	microOutput1 := microNetwork.GetOutput()
+	fmt.Printf("🧪 Micro network normal forward: [%.6f, %.6f]\n", microOutput1[0], microOutput1[1])
+
+	// Test 2: Use checkpoint state directly in micro network
+	microNetwork.ForwardFromLayer(1, checkpointState) // Layer 1 in micro = checkpoint layer
+	microOutput2 := microNetwork.GetOutput()
+	fmt.Printf("🧪 Micro network from checkpoint: [%.6f, %.6f]\n", microOutput2[0], microOutput2[1])
+
+	// Test 3: Compare with original network using checkpoint
+	originalNetwork.ForwardFromLayer(2, checkpointState) // Layer 2 in original = checkpoint layer
+	originalOutput := originalNetwork.GetOutput()
+	fmt.Printf("🧪 Original network from checkpoint: [%.6f, %.6f]\n", originalOutput[0], originalOutput[1])
+
+	// Verify they match
+	tolerance := 1e-6
+	if abs(microOutput2[0]-originalOutput[0]) < tolerance && abs(microOutput2[1]-originalOutput[1]) < tolerance {
+		fmt.Println("✅ VERIFICATION SUCCESS: Micro network matches original when using checkpoint!")
+	} else {
+		fmt.Println("❌ VERIFICATION FAILED: Outputs don't match")
+		fmt.Printf("   Difference: [%.8f, %.8f]\n",
+			abs(microOutput2[0]-originalOutput[0]), abs(microOutput2[1]-originalOutput[1]))
+	}
+}
+
+func testMicroNetworkImprovements(microNetwork *paragon.Network[float32], testInputs [][][]float64) *paragon.Network[float32] {
+	fmt.Println("\n🔬 Testing micro network performance before improvements...")
+
+	// Test current micro network performance
+	currentScore := evaluateMicroNetwork(microNetwork, testInputs, "Current Micro")
+
+	// Try adding a layer to see if it improves performance
+	fmt.Println("\n🚀 Creating improved micro network with additional layer...")
+	improvedMicro := createImprovedMicroNetwork(microNetwork)
+
+	// Test improved network performance
+	improvedScore := evaluateMicroNetwork(improvedMicro, testInputs, "Improved Micro")
+
+	// Decide which network to return
+	if improvedScore > currentScore {
+		fmt.Printf("✅ Improvement found! Score improved from %.4f to %.4f\n", currentScore, improvedScore)
+		return improvedMicro
+	} else {
+		fmt.Printf("⚠️  No improvement. Keeping original micro network (%.4f vs %.4f)\n", currentScore, improvedScore)
+		return microNetwork
+	}
+}
+
+func createImprovedMicroNetwork(originalMicro *paragon.Network[float32]) *paragon.Network[float32] {
+	// Create a new micro network with an additional hidden layer
+	// Original: 3 → 6 → 2
+	// Improved: 3 → 6 → 4 → 2 (added 4-neuron layer)
+
+	improvedLayerSizes := []struct{ Width, Height int }{
+		{3, 1}, // Input: 3 neurons
+		{6, 1}, // Hidden 1: 6 neurons (from checkpoint)
+		{4, 1}, // Hidden 2: 4 neurons (NEW)
+		{2, 1}, // Output: 2 neurons
+	}
+
+	improvedActivations := []string{"linear", "relu", "relu", "softmax"}
+	improvedFullyConnected := []bool{false, true, true, true}
+
+	improvedNetwork := paragon.NewNetwork[float32](improvedLayerSizes, improvedActivations, improvedFullyConnected)
+	improvedNetwork.Debug = true
+
+	// Copy weights from original micro network
+	// Input → Hidden1 (copy exactly)
+	copyWeightsBetweenLayers(originalMicro, 0, 1, improvedNetwork, 0, 1)
+
+	// Hidden1 → Hidden2 (new layer, random weights already initialized)
+	// Hidden2 → Output (copy from original micro Hidden1 → Output, but need to adapt)
+	copyAndAdaptOutputWeights(originalMicro, improvedNetwork)
+
+	fmt.Printf("✅ Created improved micro network: %d → %d → %d → %d\n",
+		improvedLayerSizes[0].Width, improvedLayerSizes[1].Width,
+		improvedLayerSizes[2].Width, improvedLayerSizes[3].Width)
+
+	return improvedNetwork
+}
+
+func copyAndAdaptOutputWeights(originalMicro, improvedMicro *paragon.Network[float32]) {
+	// Original micro: layer 1 → layer 2 (6 → 2)
+	// Improved micro: layer 2 → layer 3 (4 → 2)
+	// We need to adapt the 6→2 weights to work with 4→2
+
+	origOutputLayer := originalMicro.Layers[2]      // Output layer in original micro
+	improvedOutputLayer := &improvedMicro.Layers[3] // Output layer in improved micro
+
+	fmt.Println("🔗 Adapting output weights for improved micro network...")
+
+	// For each output neuron, take a subset of the original weights
+	for y := 0; y < improvedOutputLayer.Height && y < origOutputLayer.Height; y++ {
+		for x := 0; x < improvedOutputLayer.Width && x < origOutputLayer.Width; x++ {
+			origNeuron := origOutputLayer.Neurons[y][x]
+			improvedNeuron := improvedOutputLayer.Neurons[y][x]
+
+			// Copy bias
+			improvedNeuron.Bias = origNeuron.Bias
+
+			// Adapt weights: take first 4 weights from original 6
+			maxWeights := min(len(origNeuron.Inputs), len(improvedNeuron.Inputs))
+			for i := 0; i < maxWeights; i++ {
+				improvedNeuron.Inputs[i].Weight = origNeuron.Inputs[i].Weight
+			}
+		}
+	}
+}
+
+func evaluateMicroNetwork(network *paragon.Network[float32], testInputs [][][]float64, name string) float64 {
+	fmt.Printf("📊 Evaluating %s network...\n", name)
+
+	totalScore := 0.0
+	for i, input := range testInputs {
+		network.Forward(input)
+		output := network.GetOutput()
+
+		// Simple scoring: higher confidence = better score
+		maxOutput := max(output[0], output[1])
+		totalScore += maxOutput
+
+		fmt.Printf("  Input %d: %v → Output: [%.4f, %.4f] (confidence: %.4f)\n",
+			i+1, input[0], output[0], output[1], maxOutput)
+	}
+
+	avgScore := totalScore / float64(len(testInputs))
+	fmt.Printf("📈 %s average confidence score: %.4f\n", name, avgScore)
+
+	return avgScore
+}
+
+func reattachImprovedMicro(originalNetwork, bestMicro *paragon.Network[float32],
+	checkpointLayer int, testInput [][]float64, checkpointState [][]float64) {
+
+	fmt.Println("🔧 Attempting to reattach best micro network to original...")
+
+	// Check if we need to modify the original network structure
+	originalMicroLayers := 3 // input + checkpoint + output
+	if len(bestMicro.Layers) > originalMicroLayers {
+		fmt.Println("🏗️  Adding new layer to original network...")
+
+		// Add new layer after checkpoint layer in original network
+		newLayerIdx := checkpointLayer + 1
+		improvedHiddenLayer := bestMicro.Layers[2] // The new hidden layer
+
+		originalNetwork.AddLayer(newLayerIdx,
+			improvedHiddenLayer.Width, improvedHiddenLayer.Height,
+			improvedHiddenLayer.Neurons[0][0].Activation, true)
+
+		fmt.Printf("✅ Added new layer at index %d with %d neurons\n",
+			newLayerIdx, improvedHiddenLayer.Width)
+
+		// Copy weights from best micro to original network
+		// Checkpoint → New Layer
+		copyWeightsBetweenLayers(bestMicro, 1, 2, originalNetwork, checkpointLayer, newLayerIdx)
+
+		// New Layer → Output
+		copyWeightsBetweenLayers(bestMicro, 2, 3, originalNetwork, newLayerIdx, originalNetwork.OutputLayer)
+
+		fmt.Println("✅ Weights copied to original network")
+
+		// Test with checkpoint to ensure consistency
+		fmt.Println("\n🧪 Testing reattached network with checkpoint...")
+		originalNetwork.ForwardFromLayer(checkpointLayer, checkpointState)
+		reattachedOutput := originalNetwork.GetOutput()
+
+		bestMicro.ForwardFromLayer(1, checkpointState) // Layer 1 in micro = checkpoint layer
+		microOutput := bestMicro.GetOutput()
+
+		fmt.Printf("🔍 Reattached (from checkpoint): [%.6f, %.6f]\n", reattachedOutput[0], reattachedOutput[1])
+		fmt.Printf("🔍 Best micro (from checkpoint): [%.6f, %.6f]\n", microOutput[0], microOutput[1])
+
+		tolerance := 1e-4
+		if abs(reattachedOutput[0]-microOutput[0]) < tolerance && abs(reattachedOutput[1]-microOutput[1]) < tolerance {
+			fmt.Println("✅ REATTACHMENT SUCCESS: Outputs match when using checkpoint!")
+		} else {
+			fmt.Println("⚠️  REATTACHMENT PARTIAL: Some differences in outputs")
+			fmt.Printf("   Difference: [%.8f, %.8f]\n",
+				abs(reattachedOutput[0]-microOutput[0]), abs(reattachedOutput[1]-microOutput[1]))
+		}
+	} else {
+		fmt.Println("📋 No structural changes needed - micro network has same layer count")
+		fmt.Println("🔧 Updating weights in original network to match best micro...")
+
+		// Copy weights from best micro back to original network
+		// Input → Checkpoint layer
+		copyWeightsBetweenLayers(bestMicro, 0, 1, originalNetwork, 0, checkpointLayer)
+
+		// Checkpoint → Output layer
+		copyWeightsBetweenLayers(bestMicro, 1, 2, originalNetwork, checkpointLayer, originalNetwork.OutputLayer)
+
+		fmt.Println("✅ Weights updated in original network")
+
+		// Test with checkpoint to ensure consistency
+		fmt.Println("\n🧪 Testing updated original network with checkpoint...")
+		originalNetwork.ForwardFromLayer(checkpointLayer, checkpointState)
+		reattachedOutput := originalNetwork.GetOutput()
+
+		bestMicro.ForwardFromLayer(1, checkpointState) // Layer 1 in micro = checkpoint layer
+		microOutput := bestMicro.GetOutput()
+
+		fmt.Printf("🔍 Updated original (from checkpoint): [%.6f, %.6f]\n", reattachedOutput[0], reattachedOutput[1])
+		fmt.Printf("🔍 Best micro (from checkpoint):       [%.6f, %.6f]\n", microOutput[0], microOutput[1])
+
+		tolerance := 1e-6
+		if abs(reattachedOutput[0]-microOutput[0]) < tolerance && abs(reattachedOutput[1]-microOutput[1]) < tolerance {
+			fmt.Println("✅ WEIGHT UPDATE SUCCESS: Perfect match!")
+		} else {
+			fmt.Println("⚠️  WEIGHT UPDATE PARTIAL: Some differences")
+			fmt.Printf("   Difference: [%.8f, %.8f]\n",
+				abs(reattachedOutput[0]-microOutput[0]), abs(reattachedOutput[1]-microOutput[1]))
+		}
+	}
+}
+
+func getTestInputs() [][][]float64 {
+	return [][][]float64{
+		{{0.1, 0.5, 0.9}}, // Input 1
+		{{0.3, 0.7, 0.2}}, // Input 2
+		{{0.8, 0.1, 0.6}}, // Input 3
+	}
+}
+
+func flattenState(state [][]float64) []float64 {
+	var flattened []float64
+	for _, row := range state {
+		flattened = append(flattened, row...)
+	}
+	return flattened
+}
+
+func abs(x float64) float64 {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
+}
