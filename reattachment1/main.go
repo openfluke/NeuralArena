@@ -522,7 +522,11 @@ func demonstrateCompleteSurgery(network *paragon.Network[float32], testInput [][
 	startTime = time.Now()
 
 	tolerance := 1e-6
-	microNet, err := network.NetworkSurgery(checkpointLayer, testInputs, tolerance)
+	minWidth := 4
+	maxWidth := 10
+	activationPool := []string{"relu", "tanh", "sigmoid", "linear"}
+
+	microNet, err := network.NetworkSurgery(checkpointLayer, testInputs, tolerance, minWidth, maxWidth, activationPool)
 
 	surgeryTime := time.Since(startTime)
 	fmt.Printf("⏱️  Surgery completed in: %v\n", surgeryTime)
