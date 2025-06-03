@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"runtime"
 	"time"
 
 	"paragon"
@@ -41,6 +42,14 @@ func main() {
 	net.EvaluateModel(labels, extractPredictedLabels(net, inputs))
 	fmt.Printf("📊 Initial ADHD Score: %.2f\n", net.Performance.Score)
 
+	totalCores := runtime.NumCPU()
+	maxThreads := int(0.8 * float64(totalCores)) // Use 80%
+	if maxThreads < 1 {
+		maxThreads = 1
+	}
+
+	fmt.Printf("🚀 Using %d of %d cores for Grow() exploration\n", maxThreads, totalCores)
+
 	// Run grow experiment
 	improved := net.Grow(
 		1,      // checkpointLayer
@@ -54,6 +63,7 @@ func main() {
 		-1.0,   // clipLower
 		2, 8,   // minWidth, maxWidth
 		[]string{"relu", "sigmoid", "tanh"}, // activation pool
+		maxThreads,
 	)
 
 	// Show structure after
