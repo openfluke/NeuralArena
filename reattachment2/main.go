@@ -52,16 +52,16 @@ func main() {
 
 	// Run grow experiment
 	improved := net.Grow(
-		1,      // checkpointLayer
-		inputs, // testInputs
-		labels, // expectedOutputs
-		50,     // numCandidates
-		5,      // epochs
-		0.05,   // learningRate
-		1e-6,   // tolerance
-		1.0,    // clipUpper
-		-1.0,   // clipLower
-		2, 8,   // minWidth, maxWidth
+		1,         // checkpointLayer
+		inputs,    // testInputs
+		labels,    // expectedOutputs
+		50,        // numCandidates
+		5,         // epochs
+		0.05,      // learningRate
+		1e-6,      // tolerance
+		1.0, -1.0, // clipUpper / clipLower
+		2, 8, // minWidth, maxWidth
+		1, 4, // ✅ minHeight, maxHeight
 		[]string{"relu", "sigmoid", "tanh"}, // activation pool
 		maxThreads,
 	)
