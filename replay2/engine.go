@@ -21,12 +21,12 @@ const (
 
 // -------------------------------------------------- main
 func main() {
-	//singleCompare()
-	//benchmarkReplayVsBaseline()
-	//benchmarkReplayVsBaselineN()
-	//benchmarkReplayDepths()
-	//benchmarkMaxReplay()
-	//benchmarkReplaySweetSpot()
+	singleCompare()
+	benchmarkReplayVsBaseline()
+	benchmarkReplayVsBaselineN()
+	benchmarkReplayDepths()
+	benchmarkMaxReplay()
+	benchmarkReplaySweetSpot()
 	benchmarkReplayBeforeAfter()
 }
 
@@ -45,19 +45,19 @@ func singleCompare() {
 	fc := []bool{true, false, true}
 
 	// 3) ── build baseline & replay nets ──────────────────────────────────────
-	baseNet := paragon.NewNetwork(layer, acts, fc)
+	baseNet := paragon.NewNetwork[float32](layer, acts, fc)
 
-	replayNet := paragon.NewNetwork(layer, acts, fc)
+	replayNet := paragon.NewNetwork[float32](layer, acts, fc)
 	replayNet.Layers[1].ReplayOffset = -1
 	replayNet.Layers[1].ReplayPhase = "after"
 	replayNet.Layers[1].MaxReplay = 1
 
 	// 4) ── train both ────────────────────────────────────────────────────────
 	fmt.Println("🧠 Training baseline …")
-	baseNet.Train(trainX, trainY, 20, 0.001, true)
+	baseNet.Train(trainX, trainY, 5, 0.001, true, 5, -5)
 
 	fmt.Println("🧠 Training replay   …")
-	replayNet.Train(trainX, trainY, 20, 0.001, true)
+	replayNet.Train(trainX, trainY, 5, 0.001, true, 5, -5)
 
 	// 5) ── evaluation helper ─────────────────────────────────────────────────
 	type results struct {
@@ -66,7 +66,7 @@ func singleCompare() {
 		exp     []float64
 		pred    []float64
 	}
-	evaluate := func(net *paragon.Network) results {
+	evaluate := func(net *paragon.Network[float32]) results {
 		exp, pred := []float64{}, []float64{}
 		for i, in := range testX {
 			net.Forward(in)
@@ -148,14 +148,14 @@ func benchmarkReplayVsBaseline() {
 		acts := []string{"leaky_relu", "leaky_relu", "softmax"}
 		fc := []bool{true, false, true}
 
-		net := paragon.NewNetwork(layer, acts, fc)
+		net := paragon.NewNetwork[float32](layer, acts, fc)
 		if kind == "replay" {
 			net.Layers[1].ReplayOffset = -1
 			net.Layers[1].ReplayPhase = "after"
 			net.Layers[1].MaxReplay = 1
 		}
 
-		net.Train(trainX, trainY, 20, 0.001, true)
+		net.Train(trainX, trainY, 5, 0.001, true, 5, -5)
 
 		// evaluate
 		exp, pred := make([]float64, len(testX)), make([]float64, len(testX))
@@ -235,7 +235,7 @@ func benchmarkReplayVsBaseline() {
 func benchmarkReplayVsBaselineN() {
 	const (
 		NModels      = 100 // pairs → 200 total nets
-		Epochs       = 20
+		Epochs       = 5
 		LearningRate = 0.001
 	)
 
@@ -276,7 +276,7 @@ func benchmarkReplayVsBaselineN() {
 		layer := []struct{ Width, Height int }{{28, 28}, {16, 16}, {10, 1}}
 		acts := []string{"leaky_relu", "leaky_relu", "softmax"}
 		fc := []bool{true, false, true}
-		net := paragon.NewNetwork(layer, acts, fc)
+		net := paragon.NewNetwork[float32](layer, acts, fc)
 		if replay {
 			net.Layers[1].ReplayOffset = -1
 			net.Layers[1].ReplayPhase = "after"
@@ -291,7 +291,7 @@ func benchmarkReplayVsBaselineN() {
 			shuffledX[i] = trainX[p]
 			shuffledY[i] = trainY[p]
 		}
-		net.Train(shuffledX, shuffledY, Epochs, LearningRate, true)
+		net.Train(shuffledX, shuffledY, Epochs, LearningRate, true, 5, -5)
 
 		// evaluation
 		exp, pred := make([]float64, len(testX)), make([]float64, len(testX))
@@ -377,7 +377,7 @@ func benchmarkReplayDepths() {
 	// ───────── benchmark settings ──────────────────────────────────────────
 	const (
 		nRuns  = 10
-		epochs = 15
+		epochs = 5
 		lr     = 0.001
 		// network I/O sizes
 		inputW, inputH = 28, 28
@@ -443,7 +443,7 @@ func benchmarkReplayDepths() {
 		fc[0], fc[len(fc)-1] = true, true // full connect input & output
 		// hidden layers use local connectivity (fc[i]=false)
 
-		net := paragon.NewNetwork(layer, acts, fc)
+		net := paragon.NewNetwork[float32](layer, acts, fc)
 
 		// ----- 2. set replay on first rDepth hidden layers ------------------
 		for l := 1; l <= rDepth && l <= hCnt; l++ {
@@ -461,7 +461,7 @@ func benchmarkReplayDepths() {
 		}
 
 		// ----- 4. train -----------------------------------------------------
-		net.Train(shX, shY, epochs, lr, true)
+		net.Train(shX, shY, epochs, lr, true, 5, -5)
 
 		// ----- 5. evaluate --------------------------------------------------
 		correct := 0
@@ -530,7 +530,7 @@ func benchmarkReplayDepths() {
 // benchmarkMaxReplay evaluates the replay mechanism by varying MaxReplay
 func benchmarkMaxReplay() {
 	const (
-		nRuns        = 10    // Number of runs per MaxReplay value
+		nRuns        = 5     // Number of runs per MaxReplay value
 		epochs       = 20    // Training epochs
 		lr           = 0.001 // Learning rate
 		hiddenLayers = 4     // Number of hidden layers
@@ -589,7 +589,7 @@ func benchmarkMaxReplay() {
 		fc[0], fc[len(fc)-1] = true, true // Fully connected input/output
 
 		// Initialize network
-		net := paragon.NewNetwork(layers, acts, fc)
+		net := paragon.NewNetwork[float32](layers, acts, fc)
 
 		// Configure replay for hidden layers
 		for l := 1; l <= hiddenLayers; l++ {
@@ -607,7 +607,7 @@ func benchmarkMaxReplay() {
 		}
 
 		// Train the network
-		net.Train(shX, shY, epochs, lr, true)
+		net.Train(shX, shY, epochs, lr, true, 5, -5)
 
 		// Evaluate on test set
 		correct := 0
@@ -672,8 +672,8 @@ func benchmarkReplaySweetSpot() {
 	// ---------------------- hyper‑params -----------------------------------
 	const (
 		nRuns         = 10
-		epochs        = 25 // total epochs
-		warmUpEpochs  = 5  // replay disabled during these epochs
+		epochs        = 5 // total epochs
+		warmUpEpochs  = 5 // replay disabled during these epochs
 		baseLR        = 0.001
 		lrScaleReplay = 0.5 // LR multiplier after warm‑up when replay ON
 	)
@@ -734,7 +734,7 @@ func benchmarkReplaySweetSpot() {
 		fc := make([]bool, len(layers))
 		fc[0], fc[len(fc)-1] = true, true // full connect I/O
 
-		net := paragon.NewNetwork(layers, acts, fc)
+		net := paragon.NewNetwork[float32](layers, acts, fc)
 
 		// 2. configure single‑layer replay (layer 1) if requested
 		if replay {
@@ -764,7 +764,7 @@ func benchmarkReplaySweetSpot() {
 				lr *= lrScaleReplay
 			}
 			// simple one‑pass over data set each epoch
-			net.Train(shX, shY, 1, lr, true)
+			net.Train(shX, shY, 1, lr, true, 5, -5)
 		}
 
 		// 5. evaluate
@@ -837,7 +837,7 @@ func benchmarkReplaySweetSpot() {
 func benchmarkReplayBeforeAfter() {
 	const (
 		nRuns  = 10
-		epochs = 20
+		epochs = 5
 		lr     = 0.001
 	)
 
@@ -848,6 +848,8 @@ func benchmarkReplayBeforeAfter() {
 	trainX, trainY, _ := loadMNISTData(mnistDir, true)
 	testX, testY, _ := loadMNISTData(mnistDir, false)
 	trainX, trainY, _, _ = paragon.SplitDataset(trainX, trainY, 0.8)
+
+	fmt.Println(len(trainX))
 
 	// ---------- concurrency gate -----------------------------------------
 	maxW := int(0.8 * float64(runtime.NumCPU()))
@@ -889,7 +891,7 @@ func benchmarkReplayBeforeAfter() {
 		acts := []string{"leaky_relu", "leaky_relu", "softmax"}
 		fc := []bool{true, false, true}
 
-		net := paragon.NewNetwork(layers, acts, fc)
+		net := paragon.NewNetwork[float32](layers, acts, fc)
 
 		// configure replay variant
 		if kind != baseline {
@@ -909,7 +911,7 @@ func benchmarkReplayBeforeAfter() {
 			shX[i], shY[i] = trainX[p], trainY[p]
 		}
 
-		net.Train(shX, shY, epochs, lr, true)
+		net.Train(shX, shY, epochs, lr, true, 5, -5)
 
 		// evaluate
 		correct := 0
