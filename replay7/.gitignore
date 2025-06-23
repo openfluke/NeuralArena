@@ -1,0 +1,5 @@
+*.docx
+*.csv
+!cubes.csv
+!links.csv
+*.txt
