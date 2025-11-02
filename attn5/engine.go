@@ -198,8 +198,6 @@ func buildDense[T paragon.Numeric](sizes []paragon.GridSpec, acts []string, full
 }
 
 func buildAttnMix[T paragon.Numeric](sizes []paragon.GridSpec, acts []string, fully []bool, knobs attnKnobs[T]) *paragon.Network[T] {
-	// Per-slice pattern on the attention layer (index 2)
-	// If share=="layer", this still gives dense columns + attn columns in the same layer.
 	slices := make([][]string, len(sizes))
 	slices[2] = []string{"dense", "attn", "dense", "attn"}
 
@@ -208,7 +206,7 @@ func buildAttnMix[T paragon.Numeric](sizes []paragon.GridSpec, acts []string, fu
 		Heads:       knobs.heads,
 		DK:          knobs.dk,
 		UseWo:       true,
-		Share:       knobs.share, // "layer" or "per-slice"
+		Share:       knobs.share,
 		Dropout:     0.0,
 		PosEnc2D:    true,
 		UseNorm:     knobs.useNorm,
@@ -230,6 +228,21 @@ func buildAttnMix[T paragon.Numeric](sizes []paragon.GridSpec, acts []string, fu
 		panic(err)
 	}
 	return n
+}
+
+/* =========================
+   GPU INIT HELPER
+   ========================= */
+
+func initGPU(name string, net *paragon.Network[float32]) {
+	net.WebGPUNative = true
+	if err := net.InitializeOptimizedGPU(); err != nil {
+		panic(fmt.Sprintf("gpu init (fwd) failed for %s: %v", name, err))
+	}
+	if err := net.InitializeBackwardGPU(); err != nil {
+		panic(fmt.Sprintf("gpu init (bwd) failed for %s: %v", name, err))
+	}
+	fmt.Printf("[gpu-ready] %s\n", name)
 }
 
 /* =========================
@@ -266,7 +279,6 @@ func trainNet[T paragon.Numeric](net *paragon.Network[T], data []sample, cfg tra
 		for _, i := range perm {
 			net.Forward(data[i].X)
 			total += net.ComputeLoss(data[i].Y)
-			// Backward expects clip bounds as T; cast explicitly.
 			net.Backward(data[i].Y, lr, T(cfg.clipHi), T(cfg.clipLo))
 		}
 
@@ -289,7 +301,6 @@ type evalOut struct {
 }
 
 func evaluate[T paragon.Numeric](name string, net *paragon.Network[T], test []sample) evalOut {
-	// Ensure the internal perf struct exists (important after reloads)
 	net.Performance = paragon.NewADHDPerformance()
 
 	correct := 0
@@ -382,7 +393,6 @@ func main() {
 		{"attnLayer_norm_replay", "layer", true, true, true},
 	}
 	headsList := []int{1, 2, 3}
-	// Choose per-head dk; keep total hidden dim modest: total_d = heads*dk
 	perHeadDK := map[int]int{1: 64, 2: 32, 3: 24}
 
 	type namedNet struct {
@@ -409,21 +419,24 @@ func main() {
 		}
 	}
 
+	// === GPU init for ALL models ===
+	for i := range models {
+		initGPU(models[i].name, models[i].net)
+	}
+
 	// Pre-training peek
 	inPeek := test[0].X
 	dense.Forward(inPeek)
 	printFirst(dense.GetOutput(), 8, "Dense output (first 8):")
-	// Also peek the first 3 attention models just for a sniff
 	for i := 1; i <= 3 && i < len(models); i++ {
 		models[i].net.Forward(inPeek)
 		printFirst(models[i].net.GetOutput(), 8, models[i].name+" output (first 8):")
 	}
-	// Show slice types on a representative attn model (if present)
 	if len(models) > 1 {
 		fmt.Println("Layer 2 slice types (repr):", models[1].net.Layers[2].SliceTypes)
 	}
 
-	// Train all (parallel). No checkpointing during training.
+	// Train all
 	cfg := trainCfg{
 		epochs: 28,
 		lr0:    1e-2,
@@ -477,9 +490,8 @@ func main() {
 	}
 	printBucketCompare("ADHD bucket comparison", names, perfs)
 
-	// Confusion matrices (brief: show dense + H1/H2/H3 variants of one base)
+	// Confusion matrices
 	printConfusion("dense", evals[0].cm)
-	// Find and print a few representative CMs
 	for _, base := range []string{"attnLayer_noNorm", "attnLayer_norm", "attnPerSlice_norm"} {
 		for _, h := range headsList {
 			target := fmt.Sprintf("%s-H%d", base, h)
