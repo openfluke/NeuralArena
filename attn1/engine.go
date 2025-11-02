@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"paragon"
@@ -162,10 +163,10 @@ func printConfusion(name string, cm [4][4]int) {
 func buildShapes() ([]paragon.GridSpec, []string, []bool) {
 	// 8x8 -> 4x4 -> 4x4 -> 1x4
 	sizes := []paragon.GridSpec{
-		{Width: 8, Height: 8},
-		{Width: 4, Height: 4},
-		{Width: 4, Height: 4},
-		{Width: 4, Height: 1},
+		{Width: 8, Height: 8}, // input
+		{Width: 4, Height: 4}, // hidden1
+		{Width: 4, Height: 4}, // hidden2 (mix: dense/attn in columns)
+		{Width: 4, Height: 1}, // logits
 	}
 	acts := []string{"relu", "relu", "relu", "softmax"}
 	fully := []bool{false, true, true, true}
@@ -179,7 +180,8 @@ type attnKnobs[T paragon.Numeric] struct {
 	forceReplay bool
 	posEncAmp   float64
 	normEps     float64
-	dk          int
+	dk          int // per-head dimension
+	heads       int // number of heads
 }
 
 func buildDense[T paragon.Numeric](sizes []paragon.GridSpec, acts []string, fully []bool) *paragon.Network[T] {
@@ -202,6 +204,7 @@ func buildAttnMix[T paragon.Numeric](sizes []paragon.GridSpec, acts []string, fu
 
 	attnCfg := make([]*paragon.AttnConfig[T], len(sizes))
 	attnCfg[2] = &paragon.AttnConfig[T]{
+		Heads:       knobs.heads,
 		DK:          knobs.dk,
 		UseWo:       true,
 		Share:       knobs.share, // "layer" or "per-slice"
@@ -295,25 +298,23 @@ func evaluate[T paragon.Numeric](name string, net *paragon.Network[T], test []sa
 		}
 
 		res := net.EvaluatePrediction(float64(exp), float64(pred))
-		// This calls into net.Performance (now guaranteed non-nil)
 		net.UpdateADHDPerformance(res)
 
 		cm[exp][pred]++
 	}
 
-	// Finalise score inside the net (the print helper reads from perf)
 	net.Performance.Score = net.ComputeFinalScore()
 
 	return evalOut{
 		name: name,
 		acc:  float64(correct) / float64(len(test)),
-		perf: net.Performance, // return the same one the net updated
+		perf: net.Performance,
 		cm:   cm,
 	}
 }
 
 /* =========================
-   SAVE / LOAD (bundle v2)
+   SAVE / LOAD (bundle v3; no mid-training saves)
    ========================= */
 
 func saveReload(path, id string, n *paragon.Network[float32]) *paragon.Network[float32] {
@@ -348,157 +349,162 @@ func main() {
 	// Shapes
 	sizes, acts, fully := buildShapes()
 
-	// Build 6 models
+	// Dense baseline
 	dense := buildDense[float32](sizes, acts, fully)
 
-	attnLayer_noNorm := buildAttnMix[float32](sizes, acts, fully, attnKnobs[float32]{
-		share: "layer", useNorm: false, useReplay: false, forceReplay: false, posEncAmp: 0.02, normEps: 1e-6, dk: 64,
-	})
-	attnLayer_norm := buildAttnMix[float32](sizes, acts, fully, attnKnobs[float32]{
-		share: "layer", useNorm: true, useReplay: false, forceReplay: false, posEncAmp: 0.02, normEps: 1e-6, dk: 64,
-	})
-	attnPerSlice_noNorm := buildAttnMix[float32](sizes, acts, fully, attnKnobs[float32]{
-		share: "per-slice", useNorm: false, useReplay: false, forceReplay: false, posEncAmp: 0.02, normEps: 1e-6, dk: 64,
-	})
-	attnPerSlice_norm := buildAttnMix[float32](sizes, acts, fully, attnKnobs[float32]{
-		share: "per-slice", useNorm: true, useReplay: false, forceReplay: false, posEncAmp: 0.02, normEps: 1e-6, dk: 64,
-	})
-	attnLayer_norm_replay := buildAttnMix[float32](sizes, acts, fully, attnKnobs[float32]{
-		share: "layer", useNorm: true, useReplay: true, forceReplay: true, posEncAmp: 0.02, normEps: 1e-6, dk: 64,
-	})
+	// Variants × Heads
+	type variant struct {
+		base   string
+		share  string // "layer"|"per-slice"
+		norm   bool
+		replay bool
+		force  bool
+	}
+	var variants = []variant{
+		{"attnLayer_noNorm", "layer", false, false, false},
+		{"attnLayer_norm", "layer", true, false, false},
+		{"attnPerSlice_noNorm", "per-slice", false, false, false},
+		{"attnPerSlice_norm", "per-slice", true, false, false},
+		{"attnLayer_norm_replay", "layer", true, true, true},
+	}
+	headsList := []int{1, 2, 3}
+	// Choose per-head dk; keep total hidden dim modest: total_d = heads*dk
+	perHeadDK := map[int]int{1: 64, 2: 32, 3: 24}
+
+	type namedNet struct {
+		name string
+		net  *paragon.Network[float32]
+	}
+	var models []namedNet
+	models = append(models, namedNet{"dense", dense})
+
+	for _, h := range headsList {
+		for _, v := range variants {
+			name := fmt.Sprintf("%s-H%d", v.base, h)
+			n := buildAttnMix[float32](sizes, acts, fully, attnKnobs[float32]{
+				share:       v.share,
+				useNorm:     v.norm,
+				useReplay:   v.replay,
+				forceReplay: v.force,
+				posEncAmp:   0.02,
+				normEps:     1e-6,
+				dk:          perHeadDK[h],
+				heads:       h,
+			})
+			models = append(models, namedNet{name, n})
+		}
+	}
 
 	// Pre-training peek
 	inPeek := test[0].X
 	dense.Forward(inPeek)
-	attnLayer_noNorm.Forward(inPeek)
-	attnLayer_norm.Forward(inPeek)
-	attnPerSlice_noNorm.Forward(inPeek)
-	attnPerSlice_norm.Forward(inPeek)
-	attnLayer_norm_replay.Forward(inPeek)
-
 	printFirst(dense.GetOutput(), 8, "Dense output (first 8):")
-	printFirst(attnLayer_noNorm.GetOutput(), 8, "Attn layer (no norm) output (first 8):")
-	printFirst(attnLayer_norm.GetOutput(), 8, "Attn layer (with norm) output (first 8):")
-	fmt.Println("Layer 2 slice types (attn layer):", attnLayer_norm.Layers[2].SliceTypes)
+	// Also peek the first 3 attention models just for a sniff
+	for i := 1; i <= 3 && i < len(models); i++ {
+		models[i].net.Forward(inPeek)
+		printFirst(models[i].net.GetOutput(), 8, models[i].name+" output (first 8):")
+	}
+	// Show slice types on a representative attn model (if present)
+	if len(models) > 1 {
+		fmt.Println("Layer 2 slice types (repr):", models[1].net.Layers[2].SliceTypes)
+	}
 
-	// Train all (parallel)
+	// Train all (parallel). No checkpointing during training.
 	cfg := trainCfg{
 		epochs: 28,
 		lr0:    1e-2,
 		lr1:    3e-3,
 		clipHi: 1.0,
 		clipLo: -1.0,
-		seed:   2025,
 	}
 	var wg sync.WaitGroup
-	run := func(n *paragon.Network[float32], name string, seed int64) {
+	fmt.Println("\n=== Training (parallel) ===")
+	for i := range models {
+		seed := int64(100 + i*7)
 		wg.Add(1)
-		go trainNet[float32](n, train, trainCfg{
+		go trainNet[float32](models[i].net, train, trainCfg{
 			epochs: cfg.epochs, lr0: cfg.lr0, lr1: cfg.lr1,
-			clipHi: cfg.clipHi, clipLo: cfg.clipLo, seed: seed, name: name,
+			clipHi: cfg.clipHi, clipLo: cfg.clipLo, seed: seed, name: models[i].name,
 		}, &wg)
 	}
-	fmt.Println("\n=== Training (parallel) ===")
-	run(dense, "dense", 11)
-	run(attnLayer_noNorm, "attnLayer_noNorm", 22)
-	run(attnLayer_norm, "attnLayer_norm", 33)
-	run(attnPerSlice_noNorm, "attnPerSlice_noNorm", 44)
-	run(attnPerSlice_norm, "attnPerSlice_norm", 55)
-	run(attnLayer_norm_replay, "attnLayer_norm_replay", 66)
 	wg.Wait()
 
 	// Post-training peek
-	dense.Forward(inPeek)
-	attnLayer_noNorm.Forward(inPeek)
-	attnLayer_norm.Forward(inPeek)
-	attnPerSlice_noNorm.Forward(inPeek)
-	attnPerSlice_norm.Forward(inPeek)
-	attnLayer_norm_replay.Forward(inPeek)
 	fmt.Println("\n=== Post-training ===")
+	dense.Forward(inPeek)
 	printFirst(dense.GetOutput(), 8, "Dense output (first 8):")
-	printFirst(attnLayer_noNorm.GetOutput(), 8, "Attn layer (no norm) output (first 8):")
-	printFirst(attnLayer_norm.GetOutput(), 8, "Attn layer (with norm) output (first 8):")
+	for i := 1; i <= 3 && i < len(models); i++ {
+		models[i].net.Forward(inPeek)
+		printFirst(models[i].net.GetOutput(), 8, models[i].name+" output (first 8):")
+	}
 
-	// Evaluate
-	eDense := evaluate("dense", dense, test)
-	eLay0 := evaluate("attnLayer_noNorm", attnLayer_noNorm, test)
-	eLayN := evaluate("attnLayer_norm", attnLayer_norm, test)
-	eSlice0 := evaluate("attnPerSlice_noNorm", attnPerSlice_noNorm, test)
-	eSliceN := evaluate("attnPerSlice_norm", attnPerSlice_norm, test)
-	eLayNR := evaluate("attnLayer_norm_replay", attnLayer_norm_replay, test)
+	// Evaluate all
+	var evals []evalOut
+	for _, m := range models {
+		ev := evaluate(m.name, m.net, test)
+		evals = append(evals, ev)
+	}
 
 	fmt.Printf("\n=== Accuracy (global two-query) ===\n")
-	fmt.Printf("dense                 : %.2f%%\n", 100*eDense.acc)
-	fmt.Printf("attnLayer_noNorm      : %.2f%%\n", 100*eLay0.acc)
-	fmt.Printf("attnLayer_norm        : %.2f%%\n", 100*eLayN.acc)
-	fmt.Printf("attnPerSlice_noNorm   : %.2f%%\n", 100*eSlice0.acc)
-	fmt.Printf("attnPerSlice_norm     : %.2f%%\n", 100*eSliceN.acc)
-	fmt.Printf("attnLayer_norm_replay : %.2f%%\n", 100*eLayNR.acc)
+	for _, ev := range evals {
+		fmt.Printf("%-22s : %.2f%%\n", ev.name, 100*ev.acc)
+	}
 
-	printBucketCompare(
-		"ADHD bucket comparison",
-		[]string{
-			"dense",
-			"attnLayer_noNorm",
-			"attnLayer_norm",
-			"attnPerSlice_noNorm",
-			"attnPerSlice_norm",
-			"attnLayer_norm_replay",
-		},
-		[]*paragon.ADHDPerformance{
-			eDense.perf, eLay0.perf, eLayN.perf, eSlice0.perf, eSliceN.perf, eLayNR.perf,
-		},
-	)
-	printConfusion(eDense.name, eDense.cm)
-	printConfusion(eLay0.name, eLay0.cm)
-	printConfusion(eLayN.name, eLayN.cm)
-	printConfusion(eSlice0.name, eSlice0.cm)
-	printConfusion(eSliceN.name, eSliceN.cm)
-	printConfusion(eLayNR.name, eLayNR.cm)
+	// Buckets table
+	names := make([]string, 0, len(evals))
+	perfs := make([]*paragon.ADHDPerformance, 0, len(evals))
+	for _, ev := range evals {
+		names = append(names, ev.name)
+		perfs = append(perfs, ev.perf)
+	}
+	printBucketCompare("ADHD bucket comparison", names, perfs)
 
-	// Save & reload all; re-eval to prove persistence
-	denseRT := saveReload("dense_v2.bundle.json", "dense_v2", dense)
-	lay0RT := saveReload("attn_layer_noNorm_v2.bundle.json", "attn_layer_noNorm_v2", attnLayer_noNorm)
-	layNRT := saveReload("attn_layer_norm_v2.bundle.json", "attn_layer_norm_v2", attnLayer_norm)
-	slice0RT := saveReload("attn_perSlice_noNorm_v2.bundle.json", "attn_perSlice_noNorm_v2", attnPerSlice_noNorm)
-	sliceNRT := saveReload("attn_perSlice_norm_v2.bundle.json", "attn_perSlice_norm_v2", attnPerSlice_norm)
-	layNRRT := saveReload("attn_layer_norm_replay_v2.bundle.json", "attn_layer_norm_replay_v2", attnLayer_norm_replay)
+	// Confusion matrices (brief: show dense + H1/H2/H3 variants of one base)
+	printConfusion("dense", evals[0].cm)
+	// Find and print a few representative CMs
+	for _, base := range []string{"attnLayer_noNorm", "attnLayer_norm", "attnPerSlice_norm"} {
+		for _, h := range headsList {
+			target := fmt.Sprintf("%s-H%d", base, h)
+			for _, ev := range evals {
+				if ev.name == target {
+					printConfusion(ev.name, ev.cm)
+					break
+				}
+			}
+		}
+	}
 
-	reDense := evaluate("dense-RT", denseRT, test)
-	reLay0 := evaluate("attnLayer_noNorm-RT", lay0RT, test)
-	reLayN := evaluate("attnLayer_norm-RT", layNRT, test)
-	reSlice0 := evaluate("attnPerSlice_noNorm-RT", slice0RT, test)
-	reSliceN := evaluate("attnPerSlice_norm-RT", sliceNRT, test)
-	reLayNR := evaluate("attnLayer_norm_replay-RT", layNRRT, test)
+	// Save & reload all once; re-eval to prove persistence
+	outDir := "bundles_v3"
+	_ = os.MkdirAll(outDir, 0o755)
+	var reloaded []namedNet
+	for _, m := range models {
+		path := filepath.Join(outDir, m.name+".bundle.json")
+		rt := saveReload(path, m.name, m.net)
+		reloaded = append(reloaded, namedNet{m.name + "-RT", rt})
+	}
+
+	var ree []evalOut
+	for _, m := range reloaded {
+		ree = append(ree, evaluate(m.name, m.net, test))
+	}
 
 	fmt.Printf("\n=== Accuracy after reload ===\n")
-	fmt.Printf("dense-RT              : %.2f%%\n", 100*reDense.acc)
-	fmt.Printf("attnLayer_noNorm-RT   : %.2f%%\n", 100*reLay0.acc)
-	fmt.Printf("attnLayer_norm-RT     : %.2f%%\n", 100*reLayN.acc)
-	fmt.Printf("attnPerSlice_noNorm-RT: %.2f%%\n", 100*reSlice0.acc)
-	fmt.Printf("attnPerSlice_norm-RT  : %.2f%%\n", 100*reSliceN.acc)
-	fmt.Printf("attnLayer_norm_replay-RT: %.2f%%\n", 100*reLayNR.acc)
+	for _, ev := range ree {
+		fmt.Printf("%-22s : %.2f%%\n", ev.name, 100*ev.acc)
+	}
 
-	printBucketCompare(
-		"ADHD bucket comparison (reloaded)",
-		[]string{
-			"dense-RT",
-			"attnLayer_noNorm-RT",
-			"attnLayer_norm-RT",
-			"attnPerSlice_noNorm-RT",
-			"attnPerSlice_norm-RT",
-			"attnLayer_norm_replay-RT",
-		},
-		[]*paragon.ADHDPerformance{
-			reDense.perf, reLay0.perf, reLayN.perf, reSlice0.perf, reSliceN.perf, reLayNR.perf,
-		},
-	)
+	// Buckets (reloaded)
+	namesRT := make([]string, 0, len(ree))
+	perfsRT := make([]*paragon.ADHDPerformance, 0, len(ree))
+	for _, ev := range ree {
+		namesRT = append(namesRT, ev.name)
+		perfsRT = append(perfsRT, ev.perf)
+	}
+	printBucketCompare("ADHD bucket comparison (reloaded)", namesRT, perfsRT)
 
 	fmt.Printf("\nScores / Failures (reloaded):\n")
-	fmt.Printf("dense-RT                    -> score=%.3f  failures=%d\n", reDense.perf.Score, reDense.perf.Failures)
-	fmt.Printf("attnLayer_noNorm-RT         -> score=%.3f  failures=%d\n", reLay0.perf.Score, reLay0.perf.Failures)
-	fmt.Printf("attnLayer_norm-RT           -> score=%.3f  failures=%d\n", reLayN.perf.Score, reLayN.perf.Failures)
-	fmt.Printf("attnPerSlice_noNorm-RT      -> score=%.3f  failures=%d\n", reSlice0.perf.Score, reSlice0.perf.Failures)
-	fmt.Printf("attnPerSlice_norm-RT        -> score=%.3f  failures=%d\n", reSliceN.perf.Score, reSliceN.perf.Failures)
-	fmt.Printf("attnLayer_norm_replay-RT    -> score=%.3f  failures=%d\n", reLayNR.perf.Score, reLayNR.perf.Failures)
+	for _, ev := range ree {
+		fmt.Printf("%-26s -> score=%.3f  failures=%d\n", ev.name, ev.perf.Score, ev.perf.Failures)
+	}
 }
