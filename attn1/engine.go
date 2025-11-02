@@ -129,13 +129,13 @@ func main() {
 
 	fmt.Println("Dense-only output (first 8 vals):")
 	for i := 0; i < len(outDense) && i < 8; i++ {
-		fmt.Printf(" %.4f", outDense[i])
+		fmt.Printf(" %.15e", outDense[i])
 	}
 	fmt.Println()
 
 	fmt.Println("Mixed (dense+attn) output (first 8 vals):")
 	for i := 0; i < len(outAttn) && i < 8; i++ {
-		fmt.Printf(" %.4f", outAttn[i])
+		fmt.Printf(" %.15e", outAttn[i])
 	}
 	fmt.Println()
 
