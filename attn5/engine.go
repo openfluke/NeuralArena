@@ -387,10 +387,10 @@ func main() {
 	}
 	var variants = []variant{
 		{"attnLayer_noNorm", "layer", false, false, false},
-		{"attnLayer_norm", "layer", true, false, false},
-		{"attnPerSlice_noNorm", "per-slice", false, false, false},
-		{"attnPerSlice_norm", "per-slice", true, false, false},
-		{"attnLayer_norm_replay", "layer", true, true, true},
+		//{"attnLayer_norm", "layer", true, false, false},
+		//{"attnPerSlice_noNorm", "per-slice", false, false, false},
+		//{"attnPerSlice_norm", "per-slice", true, false, false},
+		//{"attnLayer_norm_replay", "layer", true, true, true},
 	}
 	headsList := []int{1, 2, 3}
 	perHeadDK := map[int]int{1: 64, 2: 32, 3: 24}

@@ -205,18 +205,15 @@ func buildAttnMix[T paragon.Numeric](sizes []paragon.GridSpec, acts []string, fu
 
 	attnCfg := make([]*paragon.AttnConfig[T], len(sizes))
 	attnCfg[2] = &paragon.AttnConfig[T]{
-		Heads:       knobs.heads,
-		DK:          knobs.dk,
-		UseWo:       true,
-		Share:       knobs.share, // "layer" or "per-slice"
-		Dropout:     0.0,
-		PosEnc2D:    true,
-		UseNorm:     knobs.useNorm,
-		PosEncAmp:   knobs.posEncAmp,
-		NormEps:     knobs.normEps,
-		UseReplay:   knobs.useReplay,
-		ForceReplay: knobs.forceReplay,
-		ReplayGain:  1.1,
+		Heads:     knobs.heads,
+		DK:        knobs.dk,
+		UseWo:     true,
+		Share:     knobs.share, // "layer" or "per-slice"
+		Dropout:   0.0,
+		PosEnc2D:  true,
+		UseNorm:   knobs.useNorm,
+		PosEncAmp: knobs.posEncAmp,
+		NormEps:   knobs.normEps,
 	}
 
 	n, err := paragon.BuildGridNet[T](paragon.BuildOpts[T]{
@@ -379,7 +376,6 @@ func main() {
 		{"attnLayer_norm", "layer", true, false, false},
 		{"attnPerSlice_noNorm", "per-slice", false, false, false},
 		{"attnPerSlice_norm", "per-slice", true, false, false},
-		{"attnLayer_norm_replay", "layer", true, true, true},
 	}
 	headsList := []int{1, 2, 3}
 	// Choose per-head dk; keep total hidden dim modest: total_d = heads*dk
