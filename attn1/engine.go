@@ -170,7 +170,7 @@ func buildShapes() ([]paragon.GridSpec, []string, []bool) {
 		{Width: 4, Height: 1}, // logits
 	}
 	acts := []string{"relu", "relu", "relu", "softmax"}
-	fully := []bool{false, true, true, true}
+	fully := []bool{true, true, true, true}
 	return sizes, acts, fully
 }
 
